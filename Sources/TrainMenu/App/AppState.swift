@@ -182,7 +182,7 @@ final class AppState: ObservableObject {
         if settingsWindow == nil {
             let hosting = NSHostingController(rootView: SettingsView().environmentObject(self))
             let win = NSWindow(contentViewController: hosting)
-            win.styleMask = [.titled, .closable, .miniaturizable]
+            win.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             win.isReleasedWhenClosed = false
             win.setContentSize(NSSize(width: 480, height: 600))
             win.center()

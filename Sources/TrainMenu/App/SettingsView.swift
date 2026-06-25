@@ -11,22 +11,24 @@ struct SettingsView: View {
     @State private var newStationId: String?
     @State private var newDirectionId: String?
 
+    private var lang: String { state.language }
+
     var body: some View {
-        List {
+        Form {
             boardsSection
             addSection
             prefsSection
         }
-        .listStyle(.inset)
+        .formStyle(.grouped)
         .frame(minWidth: 460, minHeight: 560)
     }
 
     private func sectionHeader(_ key: L10n.Key) -> some View {
-        Text(L10n.t(key, state.language))
-            .font(.title3.weight(.bold))
+        Text(L10n.t(key, lang))
+            .font(.title2.weight(.bold))
             .textCase(nil)
             .foregroundStyle(.primary)
-            .padding(.top, 10)
+            .padding(.top, 8)
             .padding(.bottom, 2)
     }
 
@@ -35,7 +37,7 @@ struct SettingsView: View {
     private var boardsSection: some View {
         Section {
             if state.boards.isEmpty {
-                Text(L10n.t(.addOneBelow, state.language)).foregroundStyle(.secondary)
+                Text(L10n.t(.addOneBelow, lang)).foregroundStyle(.secondary)
             } else {
                 ForEach(state.boards) { board in
                     BoardConfigRow(board: board)
@@ -52,66 +54,53 @@ struct SettingsView: View {
 
     private var addSection: some View {
         Section {
-            // Line input
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(L10n.t(.line, state.language)).frame(width: 70, alignment: .leading)
-                    TextField(L10n.t(.searchLines, state.language), text: $lineQuery)
-                        .textFieldStyle(.roundedBorder)
-                }
-                if !lineMatches.isEmpty {
-                    SuggestionBox {
-                        ForEach(lineMatches) { lineSuggestion($0) }
+            // Line — title becomes the aligned leading label in a grouped Form.
+            TextField(L10n.t(.line, lang), text: $lineQuery, prompt: Text(L10n.t(.searchLines, lang)))
+                .onChange(of: lineQuery) { newValue in
+                    if let rid = newRailwayId,
+                       state.store?.railwayTitle(rid, language: lang) != newValue {
+                        newRailwayId = nil
+                        newStationId = nil
+                        stationQuery = ""
+                        newDirectionId = nil
                     }
                 }
-            }
-            .onChange(of: lineQuery) { newValue in
-                // Invalidate the resolved line if the text no longer matches it.
-                if let rid = newRailwayId,
-                   state.store?.railwayTitle(rid, language: state.language) != newValue {
-                    newRailwayId = nil
-                    newStationId = nil
-                    stationQuery = ""
-                    newDirectionId = nil
-                }
+            if !lineMatches.isEmpty {
+                suggestionList(lineMatches) { lineSuggestion($0) }
             }
 
-            // Station input
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(L10n.t(.station, state.language)).frame(width: 70, alignment: .leading)
-                    TextField(L10n.t(.searchStations, state.language), text: $stationQuery)
-                        .textFieldStyle(.roundedBorder)
-                        .disabled(newRailwayId == nil)
-                }
-                if !stationMatches.isEmpty {
-                    SuggestionBox {
-                        ForEach(stationMatches) { stationSuggestion($0) }
+            // Station
+            TextField(L10n.t(.station, lang), text: $stationQuery, prompt: Text(L10n.t(.searchStations, lang)))
+                .disabled(newRailwayId == nil)
+                .onChange(of: stationQuery) { newValue in
+                    if let sid = newStationId,
+                       state.store?.stationTitle(sid, language: lang) != newValue {
+                        newStationId = nil
                     }
                 }
-            }
-            .onChange(of: stationQuery) { newValue in
-                if let sid = newStationId,
-                   state.store?.stationTitle(sid, language: state.language) != newValue {
-                    newStationId = nil
-                }
+            if !stationMatches.isEmpty {
+                suggestionList(stationMatches) { stationSuggestion($0) }
             }
 
-            // Direction (only two options — a picker is fine)
-            Picker(L10n.t(.direction, state.language), selection: stringBinding($newDirectionId)) {
+            // Direction (two options — a picker is the right control here)
+            Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
                 ForEach(state.directions(forRailway: newRailwayId ?? "")) { d in
-                    Text(state.store?.directionTitle(d.id, language: state.language) ?? d.id).tag(d.id)
+                    Text(state.store?.directionTitle(d.id, language: lang) ?? d.id).tag(d.id)
                 }
             }
             .disabled(newRailwayId == nil)
 
-            Button(L10n.t(.addBoardButton, state.language)) {
-                if let r = newRailwayId, let s = newStationId, let d = newDirectionId {
-                    state.addBoard(railwayId: r, stationId: s, directionId: d)
-                    resetForm()
+            HStack {
+                Spacer()
+                Button(L10n.t(.addBoardButton, lang)) {
+                    if let r = newRailwayId, let s = newStationId, let d = newDirectionId {
+                        state.addBoard(railwayId: r, stationId: s, directionId: d)
+                        resetForm()
+                    }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(newRailwayId == nil || newStationId == nil || newDirectionId == nil)
             }
-            .disabled(newRailwayId == nil || newStationId == nil || newDirectionId == nil)
         } header: {
             sectionHeader(.addBoardSection)
         }
@@ -121,12 +110,12 @@ struct SettingsView: View {
 
     private var prefsSection: some View {
         Section {
-            Picker(L10n.t(.language, state.language), selection: $state.language) {
+            Picker(L10n.t(.language, lang), selection: $state.language) {
                 ForEach(AppState.languages, id: \.self) { Text(languageName($0)).tag($0) }
             }
-            Stepper(L10n.departuresPerBoard(state.departuresPerBoard, state.language),
+            Stepper(L10n.departuresPerBoard(state.departuresPerBoard, lang),
                     value: $state.departuresPerBoard, in: 1...8)
-            Toggle(L10n.t(.launchAtLogin, state.language), isOn: $state.launchAtLogin)
+            Toggle(L10n.t(.launchAtLogin, lang), isOn: $state.launchAtLogin)
             if let err = state.loginItemError {
                 Text(err).font(.caption).foregroundStyle(.secondary)
             }
@@ -137,65 +126,73 @@ struct SettingsView: View {
 
     // MARK: Suggestions
 
-    /// Up to 8 lines matching the typed text (empty once a line is resolved).
     private var lineMatches: [Railway] {
         let q = lineQuery.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return [] }
-        if let rid = newRailwayId,
-           state.store?.railwayTitle(rid, language: state.language) == q { return [] }
+        if let rid = newRailwayId, state.store?.railwayTitle(rid, language: lang) == q { return [] }
         return Array(state.railwaysSorted.filter {
-            $0.title.localized(state.language).localizedCaseInsensitiveContains(q)
+            $0.title.localized(lang).localizedCaseInsensitiveContains(q)
                 || $0.id.localizedCaseInsensitiveContains(q)
         }.prefix(8))
     }
 
-    /// Up to 10 stations on the chosen line matching the typed text.
     private var stationMatches: [Station] {
         guard let rid = newRailwayId else { return [] }
         let q = stationQuery.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return [] }
-        if let sid = newStationId,
-           state.store?.stationTitle(sid, language: state.language) == q { return [] }
+        if let sid = newStationId, state.store?.stationTitle(sid, language: lang) == q { return [] }
         return Array(state.stations(forRailway: rid).filter {
-            (state.store?.stationTitle($0.id, language: state.language) ?? $0.id)
-                .localizedCaseInsensitiveContains(q)
+            (state.store?.stationTitle($0.id, language: lang) ?? $0.id).localizedCaseInsensitiveContains(q)
                 || $0.id.localizedCaseInsensitiveContains(q)
         }.prefix(10))
+    }
+
+    /// A bordered, full-width list of tappable suggestion rows under an input.
+    private func suggestionList<T: Identifiable, Row: View>(
+        _ items: [T], @ViewBuilder row: @escaping (T) -> Row
+    ) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { Divider() }
+                row(item)
+            }
+        }
+        .padding(.vertical, 2)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 6))
+        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12))
     }
 
     private func lineSuggestion(_ r: Railway) -> some View {
         Button {
             newRailwayId = r.id
-            lineQuery = r.title.localized(state.language)
+            lineQuery = r.title.localized(lang)
             newStationId = nil
             stationQuery = ""
             newDirectionId = state.directions(forRailway: r.id).first?.id
         } label: {
             HStack(spacing: 8) {
                 Circle().fill(Color(hex: r.color) ?? .gray).frame(width: 9, height: 9)
-                Text(r.title.localized(state.language))
+                Text(r.title.localized(lang))
                 Spacer()
                 Text(operatorName(r.id)).font(.caption).foregroundStyle(.secondary)
             }
             .contentShape(Rectangle())
+            .padding(.vertical, 5).padding(.horizontal, 8)
         }
         .buttonStyle(.plain)
-        .padding(.vertical, 3)
-        .padding(.horizontal, 4)
     }
 
     private func stationSuggestion(_ s: Station) -> some View {
         Button {
             newStationId = s.id
-            stationQuery = state.store?.stationTitle(s.id, language: state.language) ?? s.id
+            stationQuery = state.store?.stationTitle(s.id, language: lang) ?? s.id
         } label: {
-            Text(state.store?.stationTitle(s.id, language: state.language) ?? s.id)
+            Text(state.store?.stationTitle(s.id, language: lang) ?? s.id)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
+                .padding(.vertical, 5).padding(.horizontal, 8)
         }
         .buttonStyle(.plain)
-        .padding(.vertical, 3)
-        .padding(.horizontal, 4)
     }
 
     private func resetForm() {
@@ -212,27 +209,18 @@ struct SettingsView: View {
     }
 }
 
-/// A bordered container that visually groups suggestion rows under an input.
-private struct SuggestionBox<Content: View>: View {
-    @ViewBuilder var content: Content
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) { content }
-            .padding(4)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
-    }
-}
-
 struct BoardConfigRow: View {
     @EnvironmentObject var state: AppState
     let board: BoardConfig
 
     var body: some View {
         let store = state.store
-        HStack(spacing: 8) {
+        HStack(spacing: 9) {
             Circle().fill(Color(hex: store?.railwaysById[board.railwayId]?.color) ?? .gray)
-                .frame(width: 9, height: 9)
-            VStack(alignment: .leading, spacing: 1) {
+                .frame(width: 10, height: 10)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(store?.railwayTitle(board.railwayId, language: state.language) ?? board.railwayId)
+                    .fontWeight(.medium)
                 Text("\(store?.stationTitle(board.stationId, language: state.language) ?? board.stationId) → \(store?.directionTitle(board.directionId, language: state.language) ?? board.directionId)")
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -245,6 +233,7 @@ struct BoardConfigRow: View {
             .buttonStyle(.borderless)
             .help(L10n.t(.removeBoard, state.language))
         }
+        .padding(.vertical, 2)
     }
 }
 
