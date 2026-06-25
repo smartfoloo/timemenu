@@ -2,25 +2,20 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
-
-    // New-board form: typed text + the resolved selection (set only when a
-    // suggestion is picked).
-    @State private var lineQuery = ""
-    @State private var stationQuery = ""
-    @State private var newRailwayId: String?
-    @State private var newStationId: String?
-    @State private var newDirectionId: String?
+    @State private var showAddSheet = false
 
     private var lang: String { state.language }
 
     var body: some View {
         Form {
             boardsSection
-            addSection
             prefsSection
         }
         .formStyle(.grouped)
-        .frame(minWidth: 460, minHeight: 560)
+        .frame(minWidth: 460, minHeight: 520)
+        .sheet(isPresented: $showAddSheet) {
+            AddBoardSheet().environmentObject(state)
+        }
     }
 
     private func sectionHeader(_ key: L10n.Key) -> some View {
@@ -31,8 +26,6 @@ struct SettingsView: View {
             .padding(.top, 8)
             .padding(.bottom, 2)
     }
-
-    // MARK: Saved boards
 
     private var boardsSection: some View {
         Section {
@@ -45,68 +38,17 @@ struct SettingsView: View {
                 .onMove { state.moveBoards(from: $0, to: $1) }
                 .onDelete { state.removeBoards(at: $0) }
             }
+
+            Button {
+                showAddSheet = true
+            } label: {
+                Label(L10n.t(.addBoardButton, lang), systemImage: "plus.circle.fill")
+            }
+            .buttonStyle(.borderless)
         } header: {
             sectionHeader(.yourBoards)
         }
     }
-
-    // MARK: Add a board (typeahead)
-
-    private var addSection: some View {
-        Section {
-            // Line — title becomes the aligned leading label in a grouped Form.
-            TextField(L10n.t(.line, lang), text: $lineQuery, prompt: Text(L10n.t(.searchLines, lang)))
-                .onChange(of: lineQuery) { newValue in
-                    if let rid = newRailwayId,
-                       state.store?.railwayTitle(rid, language: lang) != newValue {
-                        newRailwayId = nil
-                        newStationId = nil
-                        stationQuery = ""
-                        newDirectionId = nil
-                    }
-                }
-            if !lineMatches.isEmpty {
-                suggestionList(lineMatches) { lineSuggestion($0) }
-            }
-
-            // Station
-            TextField(L10n.t(.station, lang), text: $stationQuery, prompt: Text(L10n.t(.searchStations, lang)))
-                .disabled(newRailwayId == nil)
-                .onChange(of: stationQuery) { newValue in
-                    if let sid = newStationId,
-                       state.store?.stationTitle(sid, language: lang) != newValue {
-                        newStationId = nil
-                    }
-                }
-            if !stationMatches.isEmpty {
-                suggestionList(stationMatches) { stationSuggestion($0) }
-            }
-
-            // Direction (two options — a picker is the right control here)
-            Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
-                ForEach(state.directions(forRailway: newRailwayId ?? "")) { d in
-                    Text(state.store?.directionTitle(d.id, language: lang) ?? d.id).tag(d.id)
-                }
-            }
-            .disabled(newRailwayId == nil)
-
-            HStack {
-                Spacer()
-                Button(L10n.t(.addBoardButton, lang)) {
-                    if let r = newRailwayId, let s = newStationId, let d = newDirectionId {
-                        state.addBoard(railwayId: r, stationId: s, directionId: d)
-                        resetForm()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(newRailwayId == nil || newStationId == nil || newDirectionId == nil)
-            }
-        } header: {
-            sectionHeader(.addBoardSection)
-        }
-    }
-
-    // MARK: Preferences
 
     private var prefsSection: some View {
         Section {
@@ -122,6 +64,91 @@ struct SettingsView: View {
         } header: {
             sectionHeader(.preferences)
         }
+    }
+}
+
+/// Modal sheet for composing a new board via type-ahead line/station inputs.
+struct AddBoardSheet: View {
+    @EnvironmentObject var state: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var lineQuery = ""
+    @State private var stationQuery = ""
+    @State private var newRailwayId: String?
+    @State private var newStationId: String?
+    @State private var newDirectionId: String?
+
+    private var lang: String { state.language }
+    private var canAdd: Bool { newRailwayId != nil && newStationId != nil && newDirectionId != nil }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(L10n.t(.addBoardSection, lang)).font(.title2.weight(.bold))
+                Spacer()
+            }
+            .padding([.horizontal, .top])
+            .padding(.bottom, 8)
+
+            Divider()
+
+            Form {
+                Section {
+                    TextField(L10n.t(.line, lang), text: $lineQuery, prompt: Text(L10n.t(.searchLines, lang)))
+                        .onChange(of: lineQuery) { newValue in
+                            if let rid = newRailwayId,
+                               state.store?.railwayTitle(rid, language: lang) != newValue {
+                                newRailwayId = nil
+                                newStationId = nil
+                                stationQuery = ""
+                                newDirectionId = nil
+                            }
+                        }
+                    if !lineMatches.isEmpty {
+                        suggestionList(lineMatches) { lineSuggestion($0) }
+                    }
+
+                    TextField(L10n.t(.station, lang), text: $stationQuery, prompt: Text(L10n.t(.searchStations, lang)))
+                        .disabled(newRailwayId == nil)
+                        .onChange(of: stationQuery) { newValue in
+                            if let sid = newStationId,
+                               state.store?.stationTitle(sid, language: lang) != newValue {
+                                newStationId = nil
+                            }
+                        }
+                    if !stationMatches.isEmpty {
+                        suggestionList(stationMatches) { stationSuggestion($0) }
+                    }
+
+                    Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
+                        ForEach(state.directions(forRailway: newRailwayId ?? "")) { d in
+                            Text(state.store?.directionTitle(d.id, language: lang) ?? d.id).tag(d.id)
+                        }
+                    }
+                    .disabled(newRailwayId == nil)
+                }
+            }
+            .formStyle(.grouped)
+
+            Divider()
+
+            HStack {
+                Spacer()
+                Button(L10n.t(.cancel, lang)) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button(L10n.t(.addBoardButton, lang)) {
+                    if let r = newRailwayId, let s = newStationId, let d = newDirectionId {
+                        state.addBoard(railwayId: r, stationId: s, directionId: d)
+                        dismiss()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(!canAdd)
+            }
+            .padding()
+        }
+        .frame(width: 470, height: 500)
     }
 
     // MARK: Suggestions
@@ -147,7 +174,6 @@ struct SettingsView: View {
         }.prefix(10))
     }
 
-    /// A bordered, full-width list of tappable suggestion rows under an input.
     private func suggestionList<T: Identifiable, Row: View>(
         _ items: [T], @ViewBuilder row: @escaping (T) -> Row
     ) -> some View {
@@ -195,15 +221,6 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    private func resetForm() {
-        lineQuery = ""
-        stationQuery = ""
-        newRailwayId = nil
-        newStationId = nil
-        newDirectionId = nil
-    }
-
-    /// A non-optional String binding backed by an optional, for Picker selection.
     private func stringBinding(_ source: Binding<String?>) -> Binding<String> {
         Binding(get: { source.wrappedValue ?? "" }, set: { source.wrappedValue = $0 })
     }

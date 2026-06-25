@@ -27,6 +27,7 @@ enum L10n {
         case searchLines
         case searchStations
         case removeBoard
+        case cancel
         case settingsWindowTitle
     }
 
@@ -234,6 +235,14 @@ enum L10n {
             "fr": "Supprimer le tableau",
             "zh-Hans": "删除看板",
             "zh-Hant": "刪除看板",
+        ],
+        .cancel: [
+            "en": "Cancel",
+            "ja": "キャンセル",
+            "ko": "취소",
+            "fr": "Annuler",
+            "zh-Hans": "取消",
+            "zh-Hant": "取消",
         ],
         .settingsWindowTitle: [
             "en": "TrainMenu Settings",
