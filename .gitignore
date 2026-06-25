@@ -1,0 +1,15 @@
+# Swift / SPM
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# Generated offline snapshot (regenerate with Scripts/build-data-snapshot.py)
+Sources/TrainMenu/Resources/Data/
+
+# Built app bundle
+dist/
+*.app
+
+# macOS
+.DS_Store

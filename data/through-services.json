@@ -1,0 +1,343 @@
+{
+  "JR-East.ChuoRapid": [
+    "JR-East.Ome",
+    "JR-East.Itsukaichi",
+    "JR-East.Chuo"
+  ],
+  "JR-East.Ome": [
+    "JR-East.ChuoRapid",
+    "JR-East.Itsukaichi"
+  ],
+  "JR-East.Itsukaichi": [
+    "JR-East.ChuoRapid",
+    "JR-East.Ome"
+  ],
+  "JR-East.Chuo": [
+    "JR-East.ChuoRapid"
+  ],
+  "JR-East.ChuoSobuLocal": [
+    "TokyoMetro.Tozai",
+    "ToyoRapid.ToyoRapid"
+  ],
+  "TokyoMetro.Tozai": [
+    "JR-East.ChuoSobuLocal",
+    "ToyoRapid.ToyoRapid"
+  ],
+  "ToyoRapid.ToyoRapid": [
+    "TokyoMetro.Tozai",
+    "JR-East.ChuoSobuLocal"
+  ],
+  "JR-East.Musashino": [
+    "JR-East.Keiyo"
+  ],
+  "JR-East.Keiyo": [
+    "JR-East.Musashino"
+  ],
+  "JR-East.JobanLocal": [
+    "TokyoMetro.Chiyoda"
+  ],
+  "TokyoMetro.Chiyoda": [
+    "JR-East.JobanLocal",
+    "Odakyu.Odawara",
+    "Odakyu.Tama",
+    "Odakyu.Enoshima"
+  ],
+  "Odakyu.Odawara": [
+    "TokyoMetro.Chiyoda",
+    "Odakyu.Tama",
+    "Odakyu.Enoshima"
+  ],
+  "Odakyu.Tama": [
+    "TokyoMetro.Chiyoda",
+    "Odakyu.Odawara"
+  ],
+  "Odakyu.Enoshima": [
+    "TokyoMetro.Chiyoda",
+    "Odakyu.Odawara"
+  ],
+  "JR-East.SaikyoKawagoe": [
+    "JR-East.Kawagoe",
+    "TWR.Rinkai",
+    "JR-East.ShonanShinjuku",
+    "JR-East.Yokosuka",
+    "JR-East.SotetsuDirect",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama"
+  ],
+  "JR-East.Kawagoe": [
+    "JR-East.SaikyoKawagoe"
+  ],
+  "JR-East.SotetsuDirect": [
+    "JR-East.SaikyoKawagoe",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Tokyushinyokohama",
+    "Tokyu.Toyoko",
+    "Tokyu.Meguro"
+  ],
+  "Sotetsu.Main": [
+    "JR-East.SaikyoKawagoe",
+    "JR-East.SotetsuDirect",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Tokyushinyokohama",
+    "Tokyu.Toyoko",
+    "Tokyu.Meguro",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Namboku",
+    "Toei.Mita",
+    "Saitamarailway.Saitamarailway",
+    "Tobu.Tojo"
+  ],
+  "Sotetsu.Izumino": [
+    "JR-East.SaikyoKawagoe",
+    "JR-East.SotetsuDirect",
+    "Sotetsu.Main",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Tokyushinyokohama",
+    "Tokyu.Toyoko",
+    "Tokyu.Meguro",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Namboku",
+    "Toei.Mita",
+    "Saitamarailway.Saitamarailway",
+    "Tobu.Tojo"
+  ],
+  "Sotetsu.SotetsuShinYokohama": [
+    "JR-East.SaikyoKawagoe",
+    "JR-East.SotetsuDirect",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Tokyu.Tokyushinyokohama",
+    "Tokyu.Toyoko",
+    "Tokyu.Meguro",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Namboku",
+    "Toei.Mita",
+    "Saitamarailway.Saitamarailway",
+    "Tobu.Tojo"
+  ],
+  "Tokyu.Tokyushinyokohama": [
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Toyoko",
+    "Tokyu.Meguro",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Namboku",
+    "Toei.Mita",
+    "Saitamarailway.Saitamarailway",
+    "Tobu.Tojo"
+  ],
+  "Tokyu.Toyoko": [
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Seibu.Sayama",
+    "Tobu.Tojo",
+    "TokyoMetro.Fukutoshin",
+    "Minatomirai.Minatomirai",
+    "Tokyu.Tokyushinyokohama",
+    "Sotetsu.SotetsuShinYokohama",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino"
+  ],
+  "Tokyu.Meguro": [
+    "TokyoMetro.Namboku",
+    "Toei.Mita",
+    "Saitamarailway.Saitamarailway",
+    "Tokyu.Tokyushinyokohama",
+    "Sotetsu.SotetsuShinYokohama",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino"
+  ],
+  "TokyoMetro.Fukutoshin": [
+    "Tokyu.Toyoko",
+    "Minatomirai.Minatomirai",
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Seibu.Sayama",
+    "Tobu.Tojo",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Tokyushinyokohama"
+  ],
+  "Minatomirai.Minatomirai": [
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Seibu.Sayama",
+    "Tobu.Tojo",
+    "TokyoMetro.Fukutoshin",
+    "Tokyu.Toyoko"
+  ],
+  "Seibu.Ikebukuro": [
+    "Seibu.Chichibu",
+    "Seibu.Sayama",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Yurakucho",
+    "Seibu.Seibuyurakucho",
+    "Tokyu.Toyoko",
+    "Minatomirai.Minatomirai",
+    "Tobu.Tojo"
+  ],
+  "Seibu.Seibuyurakucho": [
+    "Seibu.Chichibu",
+    "Seibu.Sayama",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Yurakucho",
+    "Seibu.Ikebukuro",
+    "Tokyu.Toyoko",
+    "Minatomirai.Minatomirai",
+    "Tobu.Tojo"
+  ],
+  "Seibu.Chichibu": [
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho"
+  ],
+  "Seibu.Sayama": [
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Tokyu.Toyoko",
+    "TokyoMetro.Fukutoshin",
+    "Minatomirai.Minatomirai",
+    "Tobu.Tojo"
+  ],
+  "Tobu.Tojo": [
+    "Tokyu.Toyoko",
+    "Minatomirai.Minatomirai",
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Seibu.Sayama",
+    "TokyoMetro.Fukutoshin",
+    "TokyoMetro.Yurakucho",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama",
+    "Tokyu.Tokyushinyokohama"
+  ],
+  "TokyoMetro.Yurakucho": [
+    "Seibu.Ikebukuro",
+    "Seibu.Seibuyurakucho",
+    "Tobu.Tojo"
+  ],
+  "TokyoMetro.Namboku": [
+    "Tokyu.Meguro",
+    "Saitamarailway.Saitamarailway",
+    "Tokyu.Tokyushinyokohama"
+  ],
+  "Toei.Mita": [
+    "Tokyu.Meguro",
+    "Saitamarailway.Saitamarailway",
+    "Tokyu.Tokyushinyokohama",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama"
+  ],
+  "Saitamarailway.Saitamarailway": [
+    "TokyoMetro.Namboku",
+    "Tokyu.Meguro",
+    "Toei.Mita",
+    "Tokyu.Tokyushinyokohama",
+    "Sotetsu.Main",
+    "Sotetsu.Izumino",
+    "Sotetsu.SotetsuShinYokohama"
+  ],
+  "TokyoMetro.Hanzomon": [
+    "Tokyu.DenEnToshi",
+    "Tobu.Tobuskytree",
+    "Tobu.Isesaki"
+  ],
+  "Tokyu.DenEnToshi": [
+    "TokyoMetro.Hanzomon",
+    "Tobu.Tobuskytree",
+    "Tobu.Isesaki"
+  ],
+  "Tobu.Tobuskytree": [
+    "TokyoMetro.Hanzomon",
+    "TokyoMetro.Hibiya",
+    "Tokyu.DenEnToshi"
+  ],
+  "TokyoMetro.Hibiya": [
+    "Tobu.Isesaki",
+    "Tobu.Tobuskytree"
+  ],
+  "Tobu.Isesaki": [
+    "TokyoMetro.Hanzomon",
+    "TokyoMetro.Hibiya",
+    "Tokyu.DenEnToshi"
+  ],
+  "Toei.Asakusa": [
+    "Keikyu.Main",
+    "Keikyu.Airport",
+    "Keisei.Main",
+    "Keisei.NaritaSkyAccess",
+    "Keisei.Oshiage"
+  ],
+  "Keikyu.Main": [
+    "Toei.Asakusa",
+    "Keisei.Main",
+    "Keisei.NaritaSkyAccess",
+    "Keisei.Oshiage"
+  ],
+  "Keikyu.Airport": [
+    "Toei.Asakusa",
+    "Keisei.Main",
+    "Keisei.NaritaSkyAccess",
+    "Keisei.Oshiage"
+  ],
+  "Keisei.Main": [
+    "Toei.Asakusa",
+    "Keikyu.Main",
+    "Keikyu.Airport"
+  ],
+  "Keisei.NaritaSkyAccess": [
+    "Toei.Asakusa",
+    "Keikyu.Main",
+    "Keikyu.Airport"
+  ],
+  "Keisei.Oshiage": [
+    "Toei.Asakusa",
+    "Keikyu.Main",
+    "Keikyu.Airport"
+  ],
+  "Toei.Shinjuku": [
+    "Keio.Keio",
+    "Keio.Sagamihara"
+  ],
+  "Keio.Keio": [
+    "Toei.Shinjuku",
+    "Keio.Sagamihara"
+  ],
+  "Keio.Sagamihara": [
+    "Toei.Shinjuku",
+    "Keio.Keio"
+  ],
+  "JR-East.ShonanShinjuku": [
+    "JR-East.Utsunomiya",
+    "JR-East.Takasaki",
+    "JR-East.Yokosuka",
+    "JR-East.Tokaido"
+  ],
+  "JR-East.Utsunomiya": [
+    "JR-East.Tokaido",
+    "JR-East.ShonanShinjuku"
+  ],
+  "JR-East.Takasaki": [
+    "JR-East.Tokaido",
+    "JR-East.ShonanShinjuku"
+  ],
+  "JR-East.Tokaido": [
+    "JR-East.Utsunomiya",
+    "JR-East.Takasaki",
+    "JR-East.ShonanShinjuku"
+  ],
+  "JR-East.Yokosuka": [
+    "JR-East.SobuRapid",
+    "JR-East.ShonanShinjuku"
+  ],
+  "JR-East.SobuRapid": [
+    "JR-East.Yokosuka"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:timemenu}",
+      "name": "Debug TrainMenu",
+      "target": "TrainMenu",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug TrainMenu"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:timemenu}",
+      "name": "Release TrainMenu",
+      "target": "TrainMenu",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release TrainMenu"
+    }
+  ]
+}
