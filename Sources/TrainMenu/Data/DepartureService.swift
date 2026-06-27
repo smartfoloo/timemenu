@@ -32,12 +32,15 @@ final class DepartureService {
 
     /// Next departures from `stationId` on `railwayId` heading `directionId`,
     /// at or after `now`.
+    /// - Parameter delaysByTrainNumber: live ODPT delays in seconds, keyed by
+    ///   train number (`n`). Empty = schedule-only.
     func upcoming(
         railwayId: String,
         stationId: String,
         directionId: String,
         now: Date = Date(),
-        limit: Int = 5
+        limit: Int = 5,
+        delaysByTrainNumber: [String: Int] = [:]
     ) throws -> [Departure] {
         guard let entries = try repo.timetables(forRailway: railwayId) else { return [] }
         let available = try repo.calendars(forRailway: railwayId)
@@ -57,22 +60,27 @@ final class DepartureService {
             else { continue }
 
             let scheduled = dayStart.addingTimeInterval(TimeInterval(offset * 60))
-            guard scheduled.timeIntervalSince(now) >= grace else { continue }
-
             // Loop lines (e.g. Yamanote) carry no `ds`; fall back to the final stop.
             let destinations = e.ds ?? e.tt.last.map { [$0.s] } ?? []
 
-            result.append(Departure(
+            var dep = Departure(
                 id: e.id,
                 scheduled: scheduled,
                 directionId: e.d,
                 trainTypeId: e.y,
                 destinationIds: destinations,
                 trainName: e.nm?.first
-            ))
+            )
+            if let n = e.n, let seconds = delaysByTrainNumber[n] {
+                dep.delayMinutes = Int((Double(seconds) / 60).rounded())
+            }
+
+            // Filter on expected time so a delayed train stays on the board.
+            guard dep.expected.timeIntervalSince(now) >= grace else { continue }
+            result.append(dep)
         }
 
-        result.sort { $0.scheduled < $1.scheduled }
+        result.sort { $0.expected < $1.expected }
         return Array(result.prefix(limit))
     }
 

@@ -15,7 +15,7 @@ final class AppState: ObservableObject {
 
     // MARK: Persisted preferences
     @Published var boards: [BoardConfig] {
-        didSet { persistBoards(); refreshAll() }
+        didSet { persistBoards(); refreshAll(); refreshRealtime() }
     }
     @Published var language: String {
         didSet { defaults.set(language, forKey: Keys.language) }  // views re-resolve titles
@@ -31,13 +31,32 @@ final class AppState: ObservableObject {
     }
     @Published var loginItemError: String?
 
+    // MARK: Real-time (ODPT)
+    /// The user's own ODPT consumer key (Keychain-backed). Empty = schedule-only.
+    @Published var apiKey: String {
+        didSet {
+            guard apiKey != oldValue else { return }
+            Keychain.set(apiKey)
+            refreshRealtime()
+        }
+    }
+    @Published var realtimeError: String?
+    @Published var realtimeUpdatedAt: Date?
+    var realtimeEnabled: Bool { !apiKey.trimmingCharacters(in: .whitespaces).isEmpty }
+
     // MARK: Live data
     @Published var boardDepartures: [UUID: [Departure]] = [:]
+    /// railwayId -> live line status (odpt:TrainInformation).
+    @Published var statusByRailway: [String: LineStatus] = [:]
+
+    /// railwayId -> (trainNumber -> delay seconds), from the last ODPT poll.
+    private var delaysByRailway: [String: [String: Int]] = [:]
 
     static let languages = ["en", "ja", "ko", "fr", "zh-Hans", "zh-Hant"]
 
     private let defaults = UserDefaults.standard
     private var timer: Timer?
+    private var realtimeTimer: Timer?
     private var suppressLoginSync = false
     private var settingsWindow: NSWindow?
     private let settingsWindowDelegate = SettingsWindowDelegate()
@@ -55,6 +74,7 @@ final class AppState: ObservableObject {
         let n = defaults.integer(forKey: Keys.perBoard)
         departuresPerBoard = (1...8).contains(n) ? n : 4
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        apiKey = Keychain.get() ?? ""
 
         do {
             let store = try DataStore()
@@ -67,8 +87,13 @@ final class AppState: ObservableObject {
         }
 
         refreshAll()
+        refreshRealtime()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshAll() }
+        }
+        // ODPT updates roughly once a minute; poll on its own cadence.
+        realtimeTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshRealtime() }
         }
 
         // Debug hook: launch, auto-open Settings, report state, quit.
@@ -101,10 +126,65 @@ final class AppState: ObservableObject {
                 railwayId: board.railwayId,
                 stationId: board.stationId,
                 directionId: board.directionId,
-                limit: departuresPerBoard
+                limit: departuresPerBoard,
+                delaysByTrainNumber: delaysByRailway[board.railwayId] ?? [:]
             )) ?? []
         }
         boardDepartures = result
+    }
+
+    // MARK: - Real-time
+
+    /// Poll ODPT for live line status (and, if the key has access, per-train
+    /// delays) on the railways currently shown, then re-apply.
+    func refreshRealtime() {
+        let key = apiKey.trimmingCharacters(in: .whitespaces)
+        guard !key.isEmpty else {
+            delaysByRailway = [:]
+            statusByRailway = [:]
+            realtimeError = nil
+            realtimeUpdatedAt = nil
+            refreshAll()
+            return
+        }
+        let railways = Set(boards.map(\.railwayId))
+        guard !railways.isEmpty else { return }
+        let client = ODPTClient(consumerKey: key)
+
+        Task { @MainActor in
+            var status: [String: LineStatus] = [:]
+            var delays: [String: [String: Int]] = [:]
+            var primaryError: String?
+
+            // 1) Line status — available to a standard ODPT Center key.
+            do {
+                for info in try await client.trainInformation() {
+                    guard let raw = info.railway else { continue }
+                    let rid = raw.replacingOccurrences(of: "odpt.Railway:", with: "")
+                    guard railways.contains(rid) else { continue }
+                    status[rid] = LineStatus(text: info.text ?? [:], statusLabel: info.status)
+                }
+            } catch {
+                primaryError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+
+            // 2) Per-train delays — only present for challenge-tier keys; best-effort.
+            for railway in railways {
+                if let trains = try? await client.trains(railwayId: railway) {
+                    var map: [String: Int] = [:]
+                    for t in trains where t.trainNumber != nil && t.delaySeconds != nil {
+                        map[t.trainNumber!] = t.delaySeconds!
+                    }
+                    if !map.isEmpty { delays[railway] = map }
+                }
+            }
+
+            self.statusByRailway = status
+            self.delaysByRailway = delays
+            self.realtimeError = primaryError
+            self.realtimeUpdatedAt = primaryError == nil ? Date() : self.realtimeUpdatedAt
+            self.refreshAll()
+        }
     }
 
     // MARK: - Board editing

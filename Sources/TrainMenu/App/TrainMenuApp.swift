@@ -88,6 +88,21 @@ struct BoardView: View {
             }
             Text("\(station) → \(dir)").font(.subheadline).foregroundStyle(.secondary)
 
+            if let status = state.statusByRailway[board.railwayId] {
+                HStack(alignment: .top, spacing: 4) {
+                    if !status.isNormal {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .padding(.top, 2)
+                    }
+                    Text(status.display(state.language))
+                        .font(.subheadline)
+                        .foregroundStyle(status.isNormal ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
             if deps.isEmpty {
                 Text(L10n.t(.noUpcoming, state.language)).font(.subheadline).foregroundStyle(.secondary).padding(.top, 1)
             } else {
@@ -144,6 +159,9 @@ struct DepartureRow: View {
                 }
             }
             .lineLimit(1)
+            if let delay = dep.delayMinutes, delay > 0 {
+                Text("+\(delay)m").font(.callout.weight(.bold)).foregroundStyle(.red)
+            }
             Spacer(minLength: 0)
         }
     }

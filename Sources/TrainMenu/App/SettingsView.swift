@@ -9,6 +9,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             boardsSection
+            realtimeSection
             prefsSection
         }
         .formStyle(.grouped)
@@ -47,6 +48,32 @@ struct SettingsView: View {
             .buttonStyle(.borderless)
         } header: {
             sectionHeader(.yourBoards)
+        }
+    }
+
+    private var realtimeSection: some View {
+        let ok = state.realtimeError == nil
+        let iconName = state.realtimeEnabled
+            ? (ok ? "dot.radiowaves.left.and.right" : "exclamationmark.triangle")
+            : "clock"
+        let iconColor: Color = state.realtimeEnabled ? (ok ? .green : .orange) : .gray
+        let statusText = state.realtimeError
+            ?? (state.realtimeEnabled ? L10n.t(.realtimeOn, lang) : L10n.t(.realtimeOff, lang))
+        let statusColor: Color = ok ? Color(nsColor: .secondaryLabelColor) : .orange
+
+        return Section {
+            SecureField(L10n.t(.apiKeyLabel, lang), text: $state.apiKey,
+                        prompt: Text(L10n.t(.apiKeyPrompt, lang)))
+
+            HStack(spacing: 6) {
+                Image(systemName: iconName).foregroundStyle(iconColor)
+                Text(statusText).font(.caption).foregroundStyle(statusColor)
+            }
+
+            Link(L10n.t(.getFreeKey, lang), destination: URL(string: "https://developer.odpt.org")!)
+                .font(.caption)
+        } header: {
+            sectionHeader(.realtimeSection)
         }
     }
 

@@ -28,6 +28,12 @@ enum L10n {
         case searchStations
         case removeBoard
         case cancel
+        case realtimeSection
+        case apiKeyLabel
+        case apiKeyPrompt
+        case getFreeKey
+        case realtimeOff
+        case realtimeOn
         case settingsWindowTitle
     }
 
@@ -243,6 +249,54 @@ enum L10n {
             "fr": "Annuler",
             "zh-Hans": "取消",
             "zh-Hant": "取消",
+        ],
+        .realtimeSection: [
+            "en": "Real-time",
+            "ja": "リアルタイム",
+            "ko": "실시간",
+            "fr": "Temps réel",
+            "zh-Hans": "实时",
+            "zh-Hant": "即時",
+        ],
+        .apiKeyLabel: [
+            "en": "ODPT API key",
+            "ja": "ODPT APIキー",
+            "ko": "ODPT API 키",
+            "fr": "Clé API ODPT",
+            "zh-Hans": "ODPT API 密钥",
+            "zh-Hant": "ODPT API 金鑰",
+        ],
+        .apiKeyPrompt: [
+            "en": "Paste your consumer key",
+            "ja": "コンシューマーキーを貼り付け",
+            "ko": "컨슈머 키 붙여넣기",
+            "fr": "Collez votre clé",
+            "zh-Hans": "粘贴你的密钥",
+            "zh-Hant": "貼上你的金鑰",
+        ],
+        .getFreeKey: [
+            "en": "Get a free key at developer.odpt.org",
+            "ja": "developer.odpt.org で無料キーを取得",
+            "ko": "developer.odpt.org에서 무료 키 받기",
+            "fr": "Obtenez une clé gratuite sur developer.odpt.org",
+            "zh-Hans": "在 developer.odpt.org 获取免费密钥",
+            "zh-Hant": "在 developer.odpt.org 取得免費金鑰",
+        ],
+        .realtimeOff: [
+            "en": "Schedule only — add a key for live status",
+            "ja": "時刻表のみ — キーを追加すると運行情報を表示",
+            "ko": "시간표만 — 키를 추가하면 운행 정보 표시",
+            "fr": "Horaires seuls — ajoutez une clé pour l'état en direct",
+            "zh-Hans": "仅时刻表 — 添加密钥以显示运行状态",
+            "zh-Hant": "僅時刻表 — 新增金鑰以顯示運行狀態",
+        ],
+        .realtimeOn: [
+            "en": "Live status on",
+            "ja": "運行情報：オン",
+            "ko": "운행 정보: 켬",
+            "fr": "État en direct activé",
+            "zh-Hans": "实时状态已开启",
+            "zh-Hant": "即時狀態已開啟",
         ],
         .settingsWindowTitle: [
             "en": "TrainMenu Settings",
