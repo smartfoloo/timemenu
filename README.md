@@ -65,7 +65,7 @@ Sources/TrainMenu/
 ## Roadmap
 
 - [x] **Phase 1** — scaffold, models, snapshot build step, metadata loader, self-test
-- [ ] **Phase 2** — Japanese national-holiday calendar + service-day/after-midnight edge cases
+- [ ] **Phase 2** — Japanese national-holiday calendar (after-midnight / service-day boundary now handled in `DepartureService`)
 - [x] **Phase 3** — Settings UI (line → station → direction), saved boards, persistence, launch-at-login
 - [x] **Phase 4** — Packaging: universal signed `.app` + `.zip`, Gatekeeper-bypass docs (no paid Apple account)
 - [x] **Phase 5** — ODPT real-time delay overlay (per-user free key). Live `odpt:Train` delays matched to scheduled departures by train number.

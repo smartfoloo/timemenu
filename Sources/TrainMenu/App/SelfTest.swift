@@ -114,6 +114,26 @@ enum SelfTest {
             throw SelfTestError.assertion("delay not applied: \(String(describing: hit.delayMinutes))m")
         }
         print("✓ delay overlay applied (train \(number): +300s → +\(hit.delayMinutes!)m, expected = scheduled+5m)")
+
+        // 3) Midnight boundary: at 23:51 we should still see trains after midnight.
+        let tokyo = CalendarResolver.tokyo
+        guard let lateNow = tokyo.date(bySettingHour: 23, minute: 51, second: 0, of: Date()) else {
+            throw SelfTestError.assertion("could not build late-night time")
+        }
+        let late = try service.upcoming(
+            railwayId: railway, stationId: station, directionId: direction, now: lateNow, limit: 3
+        )
+        guard late.count == 3 else {
+            throw SelfTestError.assertion("midnight: expected 3 departures at 23:51, got \(late.count)")
+        }
+        let crosses = late.contains {
+            tokyo.component(.day, from: $0.scheduled) != tokyo.component(.day, from: lateNow)
+        }
+        guard crosses else {
+            throw SelfTestError.assertion("midnight: no post-midnight train returned")
+        }
+        let tf = DateFormatter(); tf.timeZone = tokyo.timeZone; tf.dateFormat = "HH:mm"
+        print("✓ midnight boundary at 23:51: \(late.map { tf.string(from: $0.scheduled) }.joined(separator: ", ")) (crosses midnight)")
     }
 
     enum SelfTestError: Error { case assertion(String) }
