@@ -79,14 +79,18 @@ struct BoardView: View {
         let dir = state.directionLabel(railwayId: board.railwayId, stationId: board.stationId, directionId: board.directionId)
         let deps = state.boardDepartures[board.id] ?? []
 
-        return VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 7) {
+        return VStack(alignment: .leading, spacing: 4) {
+            // Station name is the headline (previously the line name's slot).
+            Text(station).font(.title3.weight(.semibold))
+            // Line name carries the line color, sized like a departure row.
+            HStack(spacing: 6) {
                 Circle()
                     .fill(Color(hex: store?.railwaysById[board.railwayId]?.color) ?? .gray)
-                    .frame(width: 11, height: 11)
-                Text(line).font(.title3.weight(.semibold))
+                    .frame(width: 9, height: 9)
+                Text(line).font(.body)
             }
-            Text("\(station) → \(dir)").font(.subheadline).foregroundStyle(.secondary)
+            // Direction sits where "station → dir" used to.
+            Text(dir).font(.subheadline).foregroundStyle(.secondary)
 
             if let status = state.statusByRailway[board.railwayId] {
                 HStack(alignment: .top, spacing: 4) {
