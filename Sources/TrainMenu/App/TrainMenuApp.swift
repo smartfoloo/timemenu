@@ -76,7 +76,7 @@ struct BoardView: View {
         let store = state.store
         let line = store?.railwayTitle(board.railwayId, language: state.language) ?? board.railwayId
         let station = store?.stationTitle(board.stationId, language: state.language) ?? board.stationId
-        let dir = store?.directionTitle(board.directionId, language: state.language) ?? board.directionId
+        let dir = state.directionLabel(railwayId: board.railwayId, stationId: board.stationId, directionId: board.directionId)
         let deps = state.boardDepartures[board.id] ?? []
 
         return VStack(alignment: .leading, spacing: 5) {

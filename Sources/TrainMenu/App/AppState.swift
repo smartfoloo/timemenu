@@ -256,6 +256,30 @@ final class AppState: ObservableObject {
         return all
     }
 
+    /// Cache of destination station ids per (railway, station, direction). The
+    /// underlying timetables are static, so entries never need invalidating.
+    private var directionDestCache: [String: [String]] = [:]
+
+    /// A descriptive direction label such as "横浜・元町・中華街方面", naming where
+    /// the line (and its through-services) heads from this station. Falls back to
+    /// the plain direction name (上り/下り) for loop lines or before a station is
+    /// chosen.
+    func directionLabel(railwayId: String, stationId: String, directionId: String) -> String {
+        let key = "\(railwayId)|\(stationId)|\(directionId)"
+        let ids: [String]
+        if let cached = directionDestCache[key] {
+            ids = cached
+        } else {
+            ids = service?.directionDestinations(
+                railwayId: railwayId, stationId: stationId, directionId: directionId) ?? []
+            directionDestCache[key] = ids
+        }
+        guard let store, !ids.isEmpty else {
+            return store?.directionTitle(directionId, language: language) ?? directionId
+        }
+        return L10n.directionToward(ids.map { store.stationTitle($0, language: language) }, language)
+    }
+
     // MARK: - Persistence
 
     private func persistBoards() {

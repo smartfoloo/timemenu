@@ -101,6 +101,51 @@ final class DepartureService {
         return result
     }
 
+    /// Destinations that characterize travel from `stationId` heading `directionId`:
+    /// the line's own terminus in that direction, followed by the most frequent
+    /// through-service destinations beyond the line. For a Toyoko Shibuya outbound
+    /// board this yields [Yokohama, Motomachi-Chukagai] → "横浜・元町・中華街方面".
+    ///
+    /// Returns `[]` for loop lines (no single terminus to name) or when no timetable
+    /// is available, so callers can fall back to the plain direction name.
+    func directionDestinations(
+        railwayId: String,
+        stationId: String,
+        directionId: String,
+        maxThrough: Int = 1
+    ) -> [String] {
+        guard let railway = store.railwaysById[railwayId],
+              let entries = try? repo.timetables(forRailway: railwayId),
+              let first = railway.stations.first,
+              let last = railway.stations.last,
+              first != last                       // loop line: no single terminus
+        else { return [] }
+
+        // `ascending` runs toward the end of the station list, `descending` toward
+        // the start; that end station is the canonical terminus for the direction.
+        let terminus: String?
+        switch directionId {
+        case railway.ascending: terminus = last
+        case railway.descending: terminus = first
+        default: terminus = nil                   // loop directions, etc.
+        }
+        guard let terminus, terminus != stationId else { return [] }
+
+        // Tally destinations of trains that actually depart this station this way,
+        // keeping only those beyond the line (through-services) — the on-line
+        // terminus is named explicitly below regardless of how few trains end there.
+        let onLine = Set(railway.stations)
+        var throughCounts: [String: Int] = [:]
+        for e in entries where e.d == directionId {
+            guard e.tt.contains(where: { $0.s == stationId && $0.d != nil }) else { continue }
+            let dests = e.ds ?? e.tt.last.map { [$0.s] } ?? []
+            for d in dests where !onLine.contains(d) { throughCounts[d, default: 0] += 1 }
+        }
+
+        let through = throughCounts.sorted { $0.value > $1.value }.prefix(maxThrough).map(\.key)
+        return [terminus] + through
+    }
+
     /// Parse "HH:mm" into minutes since midnight. Hours may be >= 24 (service-day
     /// convention for trains running past midnight), which naturally rolls the
     /// computed Date into the next calendar day.

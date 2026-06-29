@@ -113,6 +113,14 @@ struct AddBoardSheet: View {
         state.directions(forRailway: newRailwayId ?? "", station: newStationId)
     }
 
+    /// Descriptive label ("…方面") once a station is picked, else the plain name.
+    private func directionLabel(_ d: RailDirection) -> String {
+        guard let rid = newRailwayId, let sid = newStationId else {
+            return state.store?.directionTitle(d.id, language: lang) ?? d.id
+        }
+        return state.directionLabel(railwayId: rid, stationId: sid, directionId: d.id)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -154,7 +162,7 @@ struct AddBoardSheet: View {
 
                     Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
                         ForEach(availableDirections) { d in
-                            Text(state.store?.directionTitle(d.id, language: lang) ?? d.id).tag(d.id)
+                            Text(directionLabel(d)).tag(d.id)
                         }
                     }
                     .disabled(newRailwayId == nil || availableDirections.count <= 1)
@@ -276,7 +284,7 @@ struct BoardConfigRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(store?.railwayTitle(board.railwayId, language: state.language) ?? board.railwayId)
                     .fontWeight(.medium)
-                Text("\(store?.stationTitle(board.stationId, language: state.language) ?? board.stationId) → \(store?.directionTitle(board.directionId, language: state.language) ?? board.directionId)")
+                Text("\(store?.stationTitle(board.stationId, language: state.language) ?? board.stationId) → \(state.directionLabel(railwayId: board.railwayId, stationId: board.stationId, directionId: board.directionId))")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()

@@ -54,6 +54,22 @@ enum L10n {
         }
     }
 
+    /// A descriptive direction heading from destination names, e.g.
+    /// "横浜・元町・中華街方面" / "for Yokohama / Motomachi-Chukagai".
+    static func directionToward(_ names: [String], _ lang: String) -> String {
+        guard !names.isEmpty else { return "" }
+        switch lang {
+        case "ja", "zh-Hans", "zh-Hant":
+            return names.joined(separator: "・") + "方面"
+        case "ko":
+            return names.joined(separator: "·") + " 방면"
+        case "fr":
+            return "direction " + names.joined(separator: " / ")
+        default:
+            return "for " + names.joined(separator: " / ")
+        }
+    }
+
     static func departuresPerBoard(_ n: Int, _ lang: String) -> String {
         switch lang {
         case "ja": return "ボードごとの本数: \(n)"
