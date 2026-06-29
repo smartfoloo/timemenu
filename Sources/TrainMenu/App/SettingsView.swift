@@ -108,6 +108,11 @@ struct AddBoardSheet: View {
     private var lang: String { state.language }
     private var canAdd: Bool { newRailwayId != nil && newStationId != nil && newDirectionId != nil }
 
+    /// Directions offered for the current line/station, narrowed to one at a terminus.
+    private var availableDirections: [RailDirection] {
+        state.directions(forRailway: newRailwayId ?? "", station: newStationId)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -148,11 +153,11 @@ struct AddBoardSheet: View {
                     }
 
                     Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
-                        ForEach(state.directions(forRailway: newRailwayId ?? "")) { d in
+                        ForEach(availableDirections) { d in
                             Text(state.store?.directionTitle(d.id, language: lang) ?? d.id).tag(d.id)
                         }
                     }
-                    .disabled(newRailwayId == nil)
+                    .disabled(newRailwayId == nil || availableDirections.count <= 1)
                 }
             }
             .formStyle(.grouped)
@@ -239,6 +244,12 @@ struct AddBoardSheet: View {
         Button {
             newStationId = s.id
             stationQuery = state.store?.stationTitle(s.id, language: lang) ?? s.id
+            // Snap the direction to the only valid one at a terminus, or keep the
+            // current choice if it's still offered for this station.
+            let directions = state.directions(forRailway: newRailwayId ?? "", station: s.id)
+            if !directions.contains(where: { $0.id == newDirectionId }) {
+                newDirectionId = directions.first?.id
+            }
         } label: {
             Text(state.store?.stationTitle(s.id, language: lang) ?? s.id)
                 .frame(maxWidth: .infinity, alignment: .leading)

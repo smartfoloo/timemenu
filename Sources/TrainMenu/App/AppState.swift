@@ -226,6 +226,36 @@ final class AppState: ObservableObject {
             .compactMap { store?.directionsById[$0] }
     }
 
+    /// Directions valid for departures from `stationId` on the given line.
+    ///
+    /// At a line terminus only one direction has any trains: the first station
+    /// runs only in the ascending-index (`ascending`) direction, the last only in
+    /// the descending-index (`descending`) direction. Loop lines (where the termini
+    /// coincide, or the directions are an inner/outer loop) keep both.
+    func directions(forRailway id: String, station stationId: String?) -> [RailDirection] {
+        guard let railway = store?.railwaysById[id] else { return [] }
+        let all = directions(forRailway: id)
+        guard let stationId,
+              let first = railway.stations.first,
+              let last = railway.stations.last,
+              first != last
+        else { return all }
+
+        // Don't restrict loop lines, where both directions run at every station.
+        let isLoop = [railway.ascending, railway.descending]
+            .compactMap { $0 }
+            .contains { $0.localizedCaseInsensitiveContains("Loop") }
+        if isLoop { return all }
+
+        func resolve(_ directionId: String?) -> [RailDirection] {
+            [directionId].compactMap { $0 }.compactMap { store?.directionsById[$0] }
+        }
+
+        if stationId == first { return resolve(railway.ascending) }
+        if stationId == last { return resolve(railway.descending) }
+        return all
+    }
+
     // MARK: - Persistence
 
     private func persistBoards() {
