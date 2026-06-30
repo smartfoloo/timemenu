@@ -37,6 +37,14 @@ enum FontRole {
     }
 }
 
+/// A line that serves a chosen station, plus that station's id on the line.
+/// Offered after the user types a station name in the board composer.
+struct LineOption: Identifiable {
+    let railway: Railway
+    let stationId: String
+    var id: String { railway.id }
+}
+
 /// Central app model: owns the offline data, the user's saved boards and
 /// preferences (persisted to UserDefaults), and the live computed departures.
 @MainActor
@@ -249,6 +257,52 @@ final class AppState: ObservableObject {
         return store.railways.sorted {
             store.railwayTitle($0.id, language: language)
                 .localizedCaseInsensitiveCompare(store.railwayTitle($1.id, language: language)) == .orderedAscending
+        }
+    }
+
+    /// Stations across every line whose name (or id) matches `query`, collapsed to
+    /// one entry per display name — a transfer station like Shibuya appears once,
+    /// not once per line. Powers the station-first board composer.
+    func stationsMatching(_ query: String, limit: Int = 10) -> [Station] {
+        guard let store else { return [] }
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        let qLower = q.lowercased()
+
+        var byName: [String: Station] = [:]
+        var order: [String] = []
+        for s in store.stations {
+            let title = store.stationTitle(s.id, language: language)
+            guard title.localizedCaseInsensitiveContains(q)
+                    || s.id.localizedCaseInsensitiveContains(q) else { continue }
+            let key = title.lowercased()
+            if byName[key] == nil { byName[key] = s; order.append(key) }
+        }
+        // Prefix matches (e.g. "shin" → "Shinjuku") rank above interior matches;
+        // alphabetical within each group for a stable list.
+        let sorted = order.sorted { a, b in
+            let pa = a.hasPrefix(qLower), pb = b.hasPrefix(qLower)
+            return pa == pb ? a < b : pa
+        }
+        return sorted.prefix(limit).compactMap { byName[$0] }
+    }
+
+    /// The lines serving the station displayed as `name`, each paired with that
+    /// station's id on that line. One entry per line, sorted by line name. Only
+    /// lines present in the offline data are returned.
+    func linesServingStation(named name: String) -> [LineOption] {
+        guard let store else { return [] }
+        var seen = Set<String>()
+        var results: [LineOption] = []
+        for s in store.stations
+        where store.stationTitle(s.id, language: language).caseInsensitiveCompare(name) == .orderedSame {
+            guard let rid = s.railway, let railway = store.railwaysById[rid],
+                  seen.insert(rid).inserted else { continue }
+            results.append(LineOption(railway: railway, stationId: s.id))
+        }
+        return results.sorted {
+            store.railwayTitle($0.railway.id, language: language)
+                .localizedCaseInsensitiveCompare(store.railwayTitle($1.railway.id, language: language)) == .orderedAscending
         }
     }
 

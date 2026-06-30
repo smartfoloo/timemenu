@@ -29,6 +29,7 @@ enum L10n {
         case textSizeExtraLarge
         case launchAtLogin
         case chooseLine
+        case noLinesForStation
         case done
         case searchLines
         case searchStations
@@ -290,6 +291,14 @@ enum L10n {
             "fr": "Choisir une ligne",
             "zh-Hans": "选择线路",
             "zh-Hant": "選擇路線",
+        ],
+        .noLinesForStation: [
+            "en": "No lines found for this station",
+            "ja": "この駅を通る路線はありません",
+            "ko": "이 역을 지나는 노선이 없습니다",
+            "fr": "Aucune ligne pour cette gare",
+            "zh-Hans": "没有经过该车站的线路",
+            "zh-Hant": "沒有經過該車站的路線",
         ],
         .done: [
             "en": "Done",

@@ -100,13 +100,16 @@ struct SettingsView: View {
     }
 }
 
-/// Modal sheet for composing a new board via type-ahead line/station inputs.
+/// Modal sheet for composing a new board: type a station, then pick from the
+/// lines that pass through it, then a direction.
 struct AddBoardSheet: View {
     @EnvironmentObject var state: AppState
     @Environment(\.dismiss) private var dismiss
 
-    @State private var lineQuery = ""
     @State private var stationQuery = ""
+    /// The station name the user committed to (the display title), once chosen
+    /// from the suggestions. Nil while still typing/searching.
+    @State private var selectedStationName: String?
     @State private var newRailwayId: String?
     @State private var newStationId: String?
     @State private var newDirectionId: String?
@@ -140,30 +143,27 @@ struct AddBoardSheet: View {
 
             Form {
                 Section {
-                    TextField(L10n.t(.line, lang), text: $lineQuery, prompt: Text(L10n.t(.searchLines, lang)))
-                        .onChange(of: lineQuery) { newValue in
-                            if let rid = newRailwayId,
-                               state.store?.railwayTitle(rid, language: lang) != newValue {
+                    TextField(L10n.t(.station, lang), text: $stationQuery, prompt: Text(L10n.t(.searchStations, lang)))
+                        .onChange(of: stationQuery) { newValue in
+                            // Editing the field after a pick re-opens the search.
+                            if selectedStationName != newValue {
+                                selectedStationName = nil
                                 newRailwayId = nil
                                 newStationId = nil
-                                stationQuery = ""
                                 newDirectionId = nil
-                            }
-                        }
-                    if !lineMatches.isEmpty {
-                        suggestionList(lineMatches) { lineSuggestion($0) }
-                    }
-
-                    TextField(L10n.t(.station, lang), text: $stationQuery, prompt: Text(L10n.t(.searchStations, lang)))
-                        .disabled(newRailwayId == nil)
-                        .onChange(of: stationQuery) { newValue in
-                            if let sid = newStationId,
-                               state.store?.stationTitle(sid, language: lang) != newValue {
-                                newStationId = nil
                             }
                         }
                     if !stationMatches.isEmpty {
                         suggestionList(stationMatches) { stationSuggestion($0) }
+                    }
+
+                    if selectedStationName != nil {
+                        if lineOptions.isEmpty {
+                            Text(L10n.t(.noLinesForStation, lang))
+                                .font(state.font(.caption)).foregroundStyle(.secondary)
+                        } else {
+                            suggestionList(lineOptions) { lineSuggestion($0) }
+                        }
                     }
 
                     Picker(L10n.t(.direction, lang), selection: stringBinding($newDirectionId)) {
@@ -200,26 +200,16 @@ struct AddBoardSheet: View {
 
     // MARK: Suggestions
 
-    private var lineMatches: [Railway] {
-        let q = lineQuery.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return [] }
-        if let rid = newRailwayId, state.store?.railwayTitle(rid, language: lang) == q { return [] }
-        return Array(state.railwaysSorted.filter {
-            (state.store?.railwayTitle($0.id, language: lang) ?? $0.id).localizedCaseInsensitiveContains(q)
-                || state.store?.operatorName($0.id, language: lang).localizedCaseInsensitiveContains(q) == true
-                || $0.id.localizedCaseInsensitiveContains(q)
-        }.prefix(8))
+    /// Station-name matches across all lines, hidden once a station is committed.
+    private var stationMatches: [Station] {
+        guard selectedStationName == nil else { return [] }
+        return state.stationsMatching(stationQuery)
     }
 
-    private var stationMatches: [Station] {
-        guard let rid = newRailwayId else { return [] }
-        let q = stationQuery.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return [] }
-        if let sid = newStationId, state.store?.stationTitle(sid, language: lang) == q { return [] }
-        return Array(state.stations(forRailway: rid).filter {
-            (state.store?.stationTitle($0.id, language: lang) ?? $0.id).localizedCaseInsensitiveContains(q)
-                || $0.id.localizedCaseInsensitiveContains(q)
-        }.prefix(10))
+    /// Lines passing through the committed station.
+    private var lineOptions: [LineOption] {
+        guard let name = selectedStationName else { return [] }
+        return state.linesServingStation(named: name)
     }
 
     private func suggestionList<T: Identifiable, Row: View>(
@@ -236,35 +226,19 @@ struct AddBoardSheet: View {
         .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12))
     }
 
-    private func lineSuggestion(_ r: Railway) -> some View {
-        Button {
-            newRailwayId = r.id
-            lineQuery = state.store?.railwayTitle(r.id, language: lang) ?? r.id
-            newStationId = nil
-            stationQuery = ""
-            newDirectionId = state.directions(forRailway: r.id).first?.id
-        } label: {
-            HStack(spacing: 8) {
-                Circle().fill(Color(hex: r.color) ?? .gray).frame(width: 9, height: 9)
-                Text(state.store?.railwayTitle(r.id, language: lang) ?? r.id)
-                Spacer()
-                Text(state.store?.operatorName(r.id, language: lang) ?? "").font(state.font(.caption)).foregroundStyle(.secondary)
-            }
-            .contentShape(Rectangle())
-            .padding(.vertical, 5).padding(.horizontal, 8)
-        }
-        .buttonStyle(.plain)
-    }
-
     private func stationSuggestion(_ s: Station) -> some View {
         Button {
-            newStationId = s.id
-            stationQuery = state.store?.stationTitle(s.id, language: lang) ?? s.id
-            // Snap the direction to the only valid one at a terminus, or keep the
-            // current choice if it's still offered for this station.
-            let directions = state.directions(forRailway: newRailwayId ?? "", station: s.id)
-            if !directions.contains(where: { $0.id == newDirectionId }) {
-                newDirectionId = directions.first?.id
+            let name = state.store?.stationTitle(s.id, language: lang) ?? s.id
+            selectedStationName = name
+            stationQuery = name
+            // Offer the lines through this station; auto-pick when there's only one.
+            let lines = state.linesServingStation(named: name)
+            if lines.count == 1 {
+                selectLine(lines[0])
+            } else {
+                newRailwayId = nil
+                newStationId = nil
+                newDirectionId = nil
             }
         } label: {
             Text(state.store?.stationTitle(s.id, language: lang) ?? s.id)
@@ -273,6 +247,40 @@ struct AddBoardSheet: View {
                 .padding(.vertical, 5).padding(.horizontal, 8)
         }
         .buttonStyle(.plain)
+    }
+
+    private func lineSuggestion(_ opt: LineOption) -> some View {
+        let r = opt.railway
+        let selected = opt.railway.id == newRailwayId
+        return Button {
+            selectLine(opt)
+        } label: {
+            HStack(spacing: 8) {
+                Circle().fill(Color(hex: r.color) ?? .gray).frame(width: 9, height: 9)
+                Text(state.store?.railwayTitle(r.id, language: lang) ?? r.id)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark").foregroundStyle(.tint)
+                } else {
+                    Text(state.store?.operatorName(r.id, language: lang) ?? "")
+                        .font(state.font(.caption)).foregroundStyle(.secondary)
+                }
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 5).padding(.horizontal, 8)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Commit a line choice for the selected station and default its direction.
+    private func selectLine(_ opt: LineOption) {
+        newRailwayId = opt.railway.id
+        newStationId = opt.stationId
+        // Snap to the only valid direction at a terminus, else the first.
+        let directions = state.directions(forRailway: opt.railway.id, station: opt.stationId)
+        if !directions.contains(where: { $0.id == newDirectionId }) {
+            newDirectionId = directions.first?.id
+        }
     }
 
     private func stringBinding(_ source: Binding<String?>) -> Binding<String> {
