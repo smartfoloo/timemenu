@@ -5,7 +5,7 @@
 DerivedData/
 
 # Generated offline snapshot (regenerate with Scripts/build-data-snapshot.py)
-Sources/TrainMenu/Resources/Data/
+Sources/Timemenu/Resources/Data/
 
 # Built app bundle
 dist/

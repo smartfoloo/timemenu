@@ -1,12 +1,12 @@
 import Foundation
 
 /// CLI helper to verify a live ODPT key/endpoint without launching the GUI:
-///   ODPT_API_KEY=yourkey swift run TrainMenu --rt-probe JR-East.Yamanote
+///   ODPT_API_KEY=yourkey swift run Timemenu --rt-probe JR-East.Yamanote
 enum RealtimeProbe {
     static func run(railwayId: String) {
         guard let key = ProcessInfo.processInfo.environment["ODPT_API_KEY"], !key.isEmpty else {
             print("Set ODPT_API_KEY, e.g.:")
-            print("  ODPT_API_KEY=yourkey swift run TrainMenu --rt-probe JR-East.Yamanote")
+            print("  ODPT_API_KEY=yourkey swift run Timemenu --rt-probe JR-East.Yamanote")
             exit(1)
         }
         let client = ODPTClient(consumerKey: key)

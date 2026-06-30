@@ -389,12 +389,12 @@ enum L10n {
             "zh-Hant": "即時狀態已開啟",
         ],
         .settingsWindowTitle: [
-            "en": "TrainMenu Settings",
-            "ja": "TrainMenu 設定",
-            "ko": "TrainMenu 설정",
-            "fr": "Réglages TrainMenu",
-            "zh-Hans": "TrainMenu 设置",
-            "zh-Hant": "TrainMenu 設定",
+            "en": "Timemenu Settings",
+            "ja": "Timemenu 設定",
+            "ko": "Timemenu 설정",
+            "fr": "Réglages Timemenu",
+            "zh-Hans": "Timemenu 设置",
+            "zh-Hant": "Timemenu 設定",
         ],
         .normalService: [
             "en": "Normal service",

@@ -4,7 +4,7 @@ import Security
 /// Minimal Keychain wrapper for a single secret (the user's ODPT consumer key).
 /// The key is per-user and stays in the login Keychain — never bundled.
 enum Keychain {
-    private static let service = "org.trainmenu.odpt"
+    private static let service = "org.timemenu.odpt"
     private static let account = "consumerKey"
 
     static func get() -> String? {

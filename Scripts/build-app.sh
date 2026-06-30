@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Packages TrainMenu into a downloadable, code-signed macOS .app (+ a .zip).
+# Packages Timemenu into a downloadable, code-signed macOS .app (+ a .zip).
 # No paid Apple Developer account required.
 #
 #   Scripts/build-app.sh
 #
 # Signing:
-#   - If CODESIGN_IDENTITY is set (or a "TrainMenu Self-Signed" identity exists),
+#   - If CODESIGN_IDENTITY is set (or a "Timemenu Self-Signed" identity exists),
 #     signs with it — a *stable* signature so the Keychain "Always Allow" sticks
 #     across rebuilds. Create one once with Scripts/make-signing-cert.sh.
 #   - Otherwise signs ad-hoc (works fine; Keychain re-prompts on each new build).
@@ -16,8 +16,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="TrainMenu"
-BUNDLE_ID="org.trainmenu"
+APP_NAME="Timemenu"
+BUNDLE_ID="org.timemenu"
 VERSION="${VERSION:-1.0.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 DIST="dist"
@@ -56,15 +56,15 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$BUILD_NUMBER</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
-  <key>NSHumanReadableCopyright</key><string>TrainMenu</string>
+  <key>NSHumanReadableCopyright</key><string>Timemenu</string>
 </dict>
 </plist>
 PLIST
 
 # 4. Code sign.
 IDENTITY="${CODESIGN_IDENTITY:-}"
-if [ -z "$IDENTITY" ] && security find-identity -v -p codesigning 2>/dev/null | grep -q "TrainMenu Self-Signed"; then
-  IDENTITY="TrainMenu Self-Signed"
+if [ -z "$IDENTITY" ] && security find-identity -v -p codesigning 2>/dev/null | grep -q "Timemenu Self-Signed"; then
+  IDENTITY="Timemenu Self-Signed"
 fi
 if [ -n "$IDENTITY" ]; then
   echo "→ signing with stable identity: $IDENTITY"
@@ -84,6 +84,6 @@ echo
 echo "✓ $APP"
 echo "✓ $DIST/$APP_NAME.zip  ($(du -h "$DIST/$APP_NAME.zip" | cut -f1))"
 echo
-echo "Install: unzip, move TrainMenu.app to /Applications. On first launch (not"
-echo "notarized) clear quarantine once:  xattr -dr com.apple.quarantine /Applications/TrainMenu.app"
+echo "Install: unzip, move Timemenu.app to /Applications. On first launch (not"
+echo "notarized) clear quarantine once:  xattr -dr com.apple.quarantine /Applications/Timemenu.app"
 echo "or right-click → Open / System Settings → Privacy & Security → Open Anyway."

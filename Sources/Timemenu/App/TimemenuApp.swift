@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Menu bar app. `Main` calls `TrainMenuApp.main()`; this type is intentionally
+/// Menu bar app. `Main` calls `TimemenuApp.main()`; this type is intentionally
 /// not annotated `@main`. MenuBarExtra is the only scene — the settings window is
 /// managed manually (see `AppState.openSettings`) so nothing auto-opens at launch.
-struct TrainMenuApp: App {
+struct TimemenuApp: App {
     @StateObject private var state = AppState()
 
     var body: some Scene {
-        MenuBarExtra("TrainMenu", systemImage: "tram.fill") {
+        MenuBarExtra("Timemenu", systemImage: "tram.fill") {
             MenuContentView()
                 .environmentObject(state)
         }
@@ -21,7 +21,7 @@ struct MenuContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("TrainMenu").font(state.font(.title2, weight: .semibold))
+                Text("Timemenu").font(state.font(.title2, weight: .semibold))
                 Spacer()
             }
 

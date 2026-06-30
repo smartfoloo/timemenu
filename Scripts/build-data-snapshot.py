@@ -3,7 +3,7 @@
 build-data-snapshot.py
 
 Turns the raw Tokyo-area rail data in ./data into the compressed, bundle-ready
-snapshot consumed by the macOS app at Sources/TrainMenu/Resources/Data.
+snapshot consumed by the macOS app at Sources/Timemenu/Resources/Data.
 
 Output layout (each *.deflate is a RAW DEFLATE stream, RFC 1951, wbits=-15, so
 it round-trips with Swift's `NSData.decompressed(using: .zlib)`):
@@ -32,7 +32,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "data"
-OUT = REPO / "Sources" / "TrainMenu" / "Resources" / "Data"
+OUT = REPO / "Sources" / "Timemenu" / "Resources" / "Data"
 
 META_FILES = [
     "railways.json",

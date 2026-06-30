@@ -6,7 +6,7 @@
 # signatures change every build, so they re-prompt).
 #
 #   Scripts/make-signing-cert.sh
-#   export CODESIGN_IDENTITY="TrainMenu Self-Signed"
+#   export CODESIGN_IDENTITY="Timemenu Self-Signed"
 #   Scripts/build-app.sh
 #
 # Note: self-signed (like ad-hoc) is NOT trusted by Gatekeeper — downloaders
@@ -14,11 +14,11 @@
 #
 # If this CLI path is finicky on your setup, the GUI equivalent is reliable:
 #   Keychain Access → Certificate Assistant → Create a Certificate…
-#   Name: "TrainMenu Self-Signed", Identity Type: Self Signed Root,
+#   Name: "Timemenu Self-Signed", Identity Type: Self Signed Root,
 #   Certificate Type: Code Signing → Create.
 set -euo pipefail
 
-CN="TrainMenu Self-Signed"
+CN="Timemenu Self-Signed"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "$CN"; then

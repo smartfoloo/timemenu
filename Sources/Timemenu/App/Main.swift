@@ -15,6 +15,6 @@ struct Main {
             RealtimeProbe.run(railwayId: railway)
             return
         }
-        TrainMenuApp.main()
+        TimemenuApp.main()
     }
 }

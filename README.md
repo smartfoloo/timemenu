@@ -1,4 +1,4 @@
-# TrainMenu
+# Timemenu
 
 A macOS menu bar app that shows live (schedule-derived) upcoming departures for
 Tokyo-area train lines you care about. Click the menu bar icon to see the next
@@ -23,7 +23,7 @@ real-time delay fields. v1 derives a live countdown from the schedule + system
 clock; actual delays are a later phase (see Roadmap).
 
 `Scripts/build-data-snapshot.py` compresses `data/` into the bundle-ready
-snapshot at `Sources/TrainMenu/Resources/Data/` (~7 MB). Each file is stored as
+snapshot at `Sources/Timemenu/Resources/Data/` (~7 MB). Each file is stored as
 a raw-DEFLATE stream that Swift reads with `NSData.decompressed(using: .zlib)`.
 The 127 MB of timetables become individually compressed per-line files that are
 decompressed lazily, only for the lines you actually view.
@@ -39,10 +39,10 @@ python3 Scripts/build-data-snapshot.py
 swift build
 
 # 3a. Verify the data pipeline headlessly (no GUI needed)
-swift run TrainMenu --selftest
+swift run Timemenu --selftest
 
 # 3b. Launch the menu bar app (requires a desktop session)
-swift run TrainMenu
+swift run Timemenu
 ```
 
 You can also open `Package.swift` directly in Xcode.
@@ -53,8 +53,8 @@ You can also open `Package.swift` directly in Xcode.
 Package.swift
 Scripts/build-data-snapshot.py     # data/ -> compressed snapshot
 data/                              # source dataset
-Sources/TrainMenu/
-  App/        Main, TrainMenuApp (MenuBarExtra), AppState, SelfTest
+Sources/Timemenu/
+  App/        Main, TimemenuApp (MenuBarExtra), AppState, SelfTest
   Models/     Railway, Station, RailDirection, TrainType, TrainVehicle,
               TrainTimetable, TimetableStop
   Data/       ResourceLoader, DataStore (metadata), TimetableRepo (lazy lines),
@@ -75,7 +75,7 @@ Sources/TrainMenu/
 Build a downloadable, code-signed app (no paid Apple account needed):
 
 ```sh
-Scripts/build-app.sh     # → dist/TrainMenu.app and dist/TrainMenu.zip (~7 MB, universal)
+Scripts/build-app.sh     # → dist/Timemenu.app and dist/Timemenu.zip (~7 MB, universal)
 ```
 
 The result is a menu-bar-only app (`LSUIElement`, universal arm64 + x86_64),
@@ -87,7 +87,7 @@ self-signed code-signing identity so "Always Allow" sticks:
 
 ```sh
 Scripts/make-signing-cert.sh
-export CODESIGN_IDENTITY="TrainMenu Self-Signed"
+export CODESIGN_IDENTITY="Timemenu Self-Signed"
 Scripts/build-app.sh
 ```
 
@@ -95,7 +95,7 @@ Scripts/build-app.sh
 clear quarantine once:
 
 ```sh
-xattr -dr com.apple.quarantine /Applications/TrainMenu.app
+xattr -dr com.apple.quarantine /Applications/Timemenu.app
 ```
 
 or right-click → **Open**, or System Settings → Privacy & Security → **Open Anyway**.
@@ -121,7 +121,7 @@ key at [developer.odpt.org](https://developer.odpt.org).
 
 Verify a key from the CLI without the GUI (prints both layers):
 ```sh
-ODPT_API_KEY=yourkey swift run TrainMenu --rt-probe JR-East.Yamanote
+ODPT_API_KEY=yourkey swift run Timemenu --rt-probe JR-East.Yamanote
 ```
 
 ## Settings

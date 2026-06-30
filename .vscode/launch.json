@@ -5,20 +5,20 @@
       "request": "launch",
       "args": [],
       "cwd": "${workspaceFolder:timemenu}",
-      "name": "Debug TrainMenu",
-      "target": "TrainMenu",
+      "name": "Debug Timemenu",
+      "target": "Timemenu",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug TrainMenu"
+      "preLaunchTask": "swift: Build Debug Timemenu"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
       "cwd": "${workspaceFolder:timemenu}",
-      "name": "Release TrainMenu",
-      "target": "TrainMenu",
+      "name": "Release Timemenu",
+      "target": "Timemenu",
       "configuration": "release",
-      "preLaunchTask": "swift: Build Release TrainMenu"
+      "preLaunchTask": "swift: Build Release Timemenu"
     }
   ]
 }
