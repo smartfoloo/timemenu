@@ -30,7 +30,7 @@ enum SelfTest {
             let deps = try service.upcoming(
                 railwayId: railway, stationId: station, directionId: direction,
                 now: now, limit: 5
-            )
+            ).departures
 
             let tf = DateFormatter()
             tf.timeZone = CalendarResolver.tokyo.timeZone
@@ -105,7 +105,7 @@ enum SelfTest {
         let withDelay = try service.upcoming(
             railwayId: railway, stationId: station, directionId: direction,
             now: now, limit: 50, delaysByTrainNumber: [number: 300]
-        )
+        ).departures
         guard let hit = withDelay.first(where: { $0.id == target.id }) else {
             throw SelfTestError.assertion("delayed train \(number) not found in upcoming")
         }
@@ -122,7 +122,7 @@ enum SelfTest {
         }
         let late = try service.upcoming(
             railwayId: railway, stationId: station, directionId: direction, now: lateNow, limit: 3
-        )
+        ).departures
         guard late.count == 3 else {
             throw SelfTestError.assertion("midnight: expected 3 departures at 23:51, got \(late.count)")
         }

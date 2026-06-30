@@ -3,6 +3,40 @@ import Foundation
 import ServiceManagement
 import SwiftUI
 
+/// Text-size levels for the UI. macOS ignores SwiftUI's `dynamicTypeSize`, so we
+/// scale fonts explicitly by this multiplier; `.normal` (1.0) is the shipping look.
+enum BoardTextSize: Int, CaseIterable, Identifiable {
+    case small, normal, large, extraLarge
+
+    var id: Int { rawValue }
+
+    var scale: CGFloat {
+        switch self {
+        case .small:      return 0.85
+        case .normal:     return 1.0
+        case .large:      return 1.2
+        case .extraLarge: return 1.45
+        }
+    }
+}
+
+/// Semantic font roles with their macOS base point sizes, scaled by the user's
+/// chosen `BoardTextSize`. Lets both the menu board and Settings honor the setting.
+enum FontRole {
+    case title2, title3, body, callout, subheadline, caption
+
+    var basePointSize: CGFloat {
+        switch self {
+        case .title2:      return 17
+        case .title3:      return 15
+        case .body:        return 13
+        case .callout:     return 12
+        case .subheadline: return 11
+        case .caption:     return 10
+        }
+    }
+}
+
 /// Central app model: owns the offline data, the user's saved boards and
 /// preferences (persisted to UserDefaults), and the live computed departures.
 @MainActor
@@ -22,6 +56,9 @@ final class AppState: ObservableObject {
     }
     @Published var departuresPerBoard: Int {
         didSet { defaults.set(departuresPerBoard, forKey: Keys.perBoard); refreshAll() }
+    }
+    @Published var boardTextSize: BoardTextSize {
+        didSet { defaults.set(boardTextSize.rawValue, forKey: Keys.textSize) }
     }
     @Published var launchAtLogin: Bool {
         didSet {
@@ -45,7 +82,7 @@ final class AppState: ObservableObject {
     var realtimeEnabled: Bool { !apiKey.trimmingCharacters(in: .whitespaces).isEmpty }
 
     // MARK: Live data
-    @Published var boardDepartures: [UUID: [Departure]] = [:]
+    @Published var boardDepartures: [UUID: BoardDepartures] = [:]
     /// railwayId -> live line status (odpt:TrainInformation).
     @Published var statusByRailway: [String: LineStatus] = [:]
 
@@ -65,6 +102,7 @@ final class AppState: ObservableObject {
         static let boards = "boards"
         static let language = "language"
         static let perBoard = "departuresPerBoard"
+        static let textSize = "boardTextSize"
     }
 
     init() {
@@ -73,6 +111,9 @@ final class AppState: ObservableObject {
         language = defaults.string(forKey: Keys.language) ?? "en"
         let n = defaults.integer(forKey: Keys.perBoard)
         departuresPerBoard = (1...8).contains(n) ? n : 4
+        // object(forKey:) so a missing key falls back to .normal, not raw value 0.
+        boardTextSize = (defaults.object(forKey: Keys.textSize) as? Int)
+            .flatMap(BoardTextSize.init(rawValue:)) ?? .normal
         launchAtLogin = SMAppService.mainApp.status == .enabled
         apiKey = Keychain.get() ?? ""
 
@@ -120,7 +161,7 @@ final class AppState: ObservableObject {
 
     func refreshAll() {
         guard let service else { return }
-        var result: [UUID: [Departure]] = [:]
+        var result: [UUID: BoardDepartures] = [:]
         for board in boards {
             result[board.id] = (try? service.upcoming(
                 railwayId: board.railwayId,
@@ -128,7 +169,7 @@ final class AppState: ObservableObject {
                 directionId: board.directionId,
                 limit: departuresPerBoard,
                 delaysByTrainNumber: delaysByRailway[board.railwayId] ?? [:]
-            )) ?? []
+            )) ?? BoardDepartures.none
         }
         boardDepartures = result
     }
@@ -204,8 +245,10 @@ final class AppState: ObservableObject {
     // MARK: - Lookups for the settings UI
 
     var railwaysSorted: [Railway] {
-        (store?.railways ?? []).sorted {
-            $0.title.localized(language).localizedCaseInsensitiveCompare($1.title.localized(language)) == .orderedAscending
+        guard let store else { return [] }
+        return store.railways.sorted {
+            store.railwayTitle($0.id, language: language)
+                .localizedCaseInsensitiveCompare(store.railwayTitle($1.id, language: language)) == .orderedAscending
         }
     }
 
@@ -278,6 +321,15 @@ final class AppState: ObservableObject {
             return store?.directionTitle(directionId, language: language) ?? directionId
         }
         return L10n.directionToward(ids.map { store.stationTitle($0, language: language) }, language)
+    }
+
+    // MARK: - Fonts
+
+    /// A system font for the given role, scaled by the current text-size setting.
+    func font(_ role: FontRole, weight: Font.Weight = .regular, monospaced: Bool = false) -> Font {
+        .system(size: round(role.basePointSize * boardTextSize.scale),
+                weight: weight,
+                design: monospaced ? .monospaced : .default)
     }
 
     // MARK: - Persistence

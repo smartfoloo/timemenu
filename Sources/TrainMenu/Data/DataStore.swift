@@ -46,7 +46,18 @@ final class DataStore {
     // MARK: - Display helpers
 
     func railwayTitle(_ id: String, language: String = "en") -> String {
-        railwaysById[id]?.title.localized(language) ?? id
+        // Curated corrections take precedence over the raw metadata title.
+        if let override = RailwayNaming.titleOverrides[id] {
+            return override.localized(language)
+        }
+        return railwaysById[id]?.title.localized(language) ?? id
+    }
+
+    /// Localized name of the line's operator (the id prefix before the first ".").
+    func operatorName(_ railwayId: String, language: String = "en") -> String {
+        let id = String(railwayId.split(separator: ".").first ?? "")
+        return RailwayNaming.operatorNames[id]?.localized(language)
+            ?? RailwayNaming.fallbackOperatorName(id)
     }
 
     func stationTitle(_ id: String, language: String = "en") -> String {

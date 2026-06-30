@@ -19,9 +19,26 @@ struct Departure: Identifiable {
     }
 }
 
+/// Departures for a board, plus whether today's service is over. `serviceEnded`
+/// is true only when the line runs today in this direction but every train has
+/// already departed — distinct from a line that has no service today at all
+/// (both yield an empty `departures`).
+struct BoardDepartures {
+    var departures: [Departure]
+    var serviceEnded: Bool
+
+    static let none = BoardDepartures(departures: [], serviceEnded: false)
+}
+
 /// Computes upcoming departures for a (railway, station, direction) board from
 /// the static timetables.
 final class DepartureService {
+    /// Hour (Tokyo time) that splits one service day from the next. It sits in
+    /// the nightly gap between the last post-midnight trains (~01:xx) and the
+    /// first morning trains (~04:00), so "today's service" keeps trains that run
+    /// just past midnight but excludes tomorrow's first departures.
+    static let serviceDayStartHour = 3
+
     private let store: DataStore
     private let repo: TimetableRepo
 
@@ -41,18 +58,26 @@ final class DepartureService {
         now: Date = Date(),
         limit: Int = 5,
         delaysByTrainNumber: [String: Int] = [:]
-    ) throws -> [Departure] {
-        guard let entries = try repo.timetables(forRailway: railwayId) else { return [] }
+    ) throws -> BoardDepartures {
+        guard let entries = try repo.timetables(forRailway: railwayId) else { return .none }
         let available = try repo.calendars(forRailway: railwayId)
         let cal = CalendarResolver.tokyo
         let grace: TimeInterval = -60  // keep a train that just departed within the last minute
 
+        // Bounds of the current service day in real Tokyo time. In the small
+        // hours we're still in yesterday's service day, so anchor to the most
+        // recent service-day boundary at or before `now`.
+        let boundary = cal.date(bySettingHour: Self.serviceDayStartHour, minute: 0, second: 0, of: now) ?? now
+        let serviceStart = now >= boundary ? boundary : cal.date(byAdding: .day, value: -1, to: boundary)!
+        let serviceEnd = cal.date(byAdding: .day, value: 1, to: serviceStart)!
+
         // Late-night trains may be stored as 24:xx on the current service day OR as
-        // 00:xx on the next calendar day, depending on the operator — and in the
-        // small hours the running trains belong to yesterday's service day. So
-        // evaluate yesterday/today/tomorrow, each against its own midnight, and
-        // de-duplicate the same run (it can appear in more than one window).
-        var candidates: [Departure] = []
+        // 00:xx on the next calendar day, depending on the operator. So evaluate
+        // yesterday/today/tomorrow, each against its own midnight, then keep only
+        // departures whose real time lands inside today's service window — this
+        // drops tomorrow's first trains. De-duplicate the same run (it can appear
+        // in more than one window).
+        var windowed: [Departure] = []
         for dayOffset in -1...1 {
             guard let dayDate = cal.date(byAdding: .day, value: dayOffset, to: now),
                   let calendarKey = CalendarResolver.calendarKey(available: available, for: dayDate)
@@ -66,6 +91,8 @@ final class DepartureService {
                 else { continue }
 
                 let scheduled = dayStart.addingTimeInterval(TimeInterval(offset * 60))
+                // Only this service day's trains; tomorrow's are excluded.
+                guard scheduled >= serviceStart, scheduled < serviceEnd else { continue }
                 // Loop lines (e.g. Yamanote) carry no `ds`; fall back to the final stop.
                 let destinations = e.ds ?? e.tt.last.map { [$0.s] } ?? []
 
@@ -80,25 +107,23 @@ final class DepartureService {
                 if let n = e.n, let seconds = delaysByTrainNumber[n] {
                     dep.delayMinutes = Int((Double(seconds) / 60).rounded())
                 }
-
-                // Filter on expected time so a delayed train stays on the board.
-                if dep.expected.timeIntervalSince(now) >= grace {
-                    candidates.append(dep)
-                }
+                windowed.append(dep)
             }
         }
 
-        candidates.sort { $0.expected < $1.expected }
+        windowed.sort { $0.expected < $1.expected }
 
-        // Keep each run once (its nearest upcoming occurrence), up to `limit`.
+        // Keep each run once (its nearest occurrence in the window). `runs` covers
+        // the whole service day, including trains that have already left.
         var seen = Set<String>()
-        var result: [Departure] = []
-        for dep in candidates {
-            guard seen.insert(dep.id).inserted else { continue }
-            result.append(dep)
-            if result.count == limit { break }
-        }
-        return result
+        let runs = windowed.filter { seen.insert($0.id).inserted }
+
+        // Trains still to come (a recently-departed one is kept via `grace`),
+        // capped at `limit` — fewer than `limit` simply shows fewer.
+        let result = Array(runs.filter { $0.expected.timeIntervalSince(now) >= grace }.prefix(limit))
+
+        // Nothing left but the line did run today this way ⇒ service is over.
+        return BoardDepartures(departures: result, serviceEnded: result.isEmpty && !runs.isEmpty)
     }
 
     /// Destinations that characterize travel from `stationId` heading `directionId`:

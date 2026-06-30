@@ -13,6 +13,7 @@ struct SettingsView: View {
             prefsSection
         }
         .formStyle(.grouped)
+        .font(state.font(.body))   // default text size for all controls in the form
         .frame(minWidth: 460, minHeight: 520)
         .sheet(isPresented: $showAddSheet) {
             AddBoardSheet().environmentObject(state)
@@ -21,7 +22,7 @@ struct SettingsView: View {
 
     private func sectionHeader(_ key: L10n.Key) -> some View {
         Text(L10n.t(key, lang))
-            .font(.title2.weight(.bold))
+            .font(state.font(.title2, weight: .bold))
             .textCase(nil)
             .foregroundStyle(.primary)
             .padding(.top, 8)
@@ -67,11 +68,11 @@ struct SettingsView: View {
 
             HStack(spacing: 6) {
                 Image(systemName: iconName).foregroundStyle(iconColor)
-                Text(statusText).font(.caption).foregroundStyle(statusColor)
+                Text(statusText).font(state.font(.caption)).foregroundStyle(statusColor)
             }
 
             Link(L10n.t(.getFreeKey, lang), destination: URL(string: "https://developer.odpt.org")!)
-                .font(.caption)
+                .font(state.font(.caption))
         } header: {
             sectionHeader(.realtimeSection)
         }
@@ -84,9 +85,14 @@ struct SettingsView: View {
             }
             Stepper(L10n.departuresPerBoard(state.departuresPerBoard, lang),
                     value: $state.departuresPerBoard, in: 1...8)
+            Picker(L10n.t(.textSize, lang), selection: $state.boardTextSize) {
+                ForEach(BoardTextSize.allCases) { size in
+                    Text(L10n.textSizeName(size, lang)).tag(size)
+                }
+            }
             Toggle(L10n.t(.launchAtLogin, lang), isOn: $state.launchAtLogin)
             if let err = state.loginItemError {
-                Text(err).font(.caption).foregroundStyle(.secondary)
+                Text(err).font(state.font(.caption)).foregroundStyle(.secondary)
             }
         } header: {
             sectionHeader(.preferences)
@@ -124,7 +130,7 @@ struct AddBoardSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(L10n.t(.addBoardSection, lang)).font(.title2.weight(.bold))
+                Text(L10n.t(.addBoardSection, lang)).font(state.font(.title2, weight: .bold))
                 Spacer()
             }
             .padding([.horizontal, .top])
@@ -169,6 +175,7 @@ struct AddBoardSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .font(state.font(.body))
 
             Divider()
 
@@ -198,7 +205,8 @@ struct AddBoardSheet: View {
         guard !q.isEmpty else { return [] }
         if let rid = newRailwayId, state.store?.railwayTitle(rid, language: lang) == q { return [] }
         return Array(state.railwaysSorted.filter {
-            $0.title.localized(lang).localizedCaseInsensitiveContains(q)
+            (state.store?.railwayTitle($0.id, language: lang) ?? $0.id).localizedCaseInsensitiveContains(q)
+                || state.store?.operatorName($0.id, language: lang).localizedCaseInsensitiveContains(q) == true
                 || $0.id.localizedCaseInsensitiveContains(q)
         }.prefix(8))
     }
@@ -231,16 +239,16 @@ struct AddBoardSheet: View {
     private func lineSuggestion(_ r: Railway) -> some View {
         Button {
             newRailwayId = r.id
-            lineQuery = r.title.localized(lang)
+            lineQuery = state.store?.railwayTitle(r.id, language: lang) ?? r.id
             newStationId = nil
             stationQuery = ""
             newDirectionId = state.directions(forRailway: r.id).first?.id
         } label: {
             HStack(spacing: 8) {
                 Circle().fill(Color(hex: r.color) ?? .gray).frame(width: 9, height: 9)
-                Text(r.title.localized(lang))
+                Text(state.store?.railwayTitle(r.id, language: lang) ?? r.id)
                 Spacer()
-                Text(operatorName(r.id)).font(.caption).foregroundStyle(.secondary)
+                Text(state.store?.operatorName(r.id, language: lang) ?? "").font(state.font(.caption)).foregroundStyle(.secondary)
             }
             .contentShape(Rectangle())
             .padding(.vertical, 5).padding(.horizontal, 8)
@@ -285,7 +293,7 @@ struct BoardConfigRow: View {
                 Text(store?.railwayTitle(board.railwayId, language: state.language) ?? board.railwayId)
                     .fontWeight(.medium)
                 Text("\(store?.stationTitle(board.stationId, language: state.language) ?? board.stationId) → \(state.directionLabel(railwayId: board.railwayId, stationId: board.stationId, directionId: board.directionId))")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(state.font(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             Button(role: .destructive) {
@@ -298,10 +306,6 @@ struct BoardConfigRow: View {
         }
         .padding(.vertical, 2)
     }
-}
-
-private func operatorName(_ railwayId: String) -> String {
-    String(railwayId.split(separator: ".").first ?? "")
 }
 
 private func languageName(_ code: String) -> String {

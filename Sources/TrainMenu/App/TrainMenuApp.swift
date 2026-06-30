@@ -21,12 +21,12 @@ struct MenuContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("TrainMenu").font(.title2.weight(.semibold))
+                Text("TrainMenu").font(state.font(.title2, weight: .semibold))
                 Spacer()
             }
 
             if let err = state.loadError {
-                Text(err).font(.callout).foregroundStyle(.red).textSelection(.enabled)
+                Text(err).font(state.font(.callout)).foregroundStyle(.red).textSelection(.enabled)
             } else if state.boards.isEmpty {
                 emptyState
             } else {
@@ -48,9 +48,9 @@ struct MenuContentView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(L10n.t(.noBoardsTitle, state.language)).font(.body)
+            Text(L10n.t(.noBoardsTitle, state.language)).font(state.font(.body))
             Text(L10n.t(.emptyStateBody, state.language))
-                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .font(state.font(.subheadline)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 4)
     }
@@ -58,10 +58,10 @@ struct MenuContentView: View {
     private var footer: some View {
         HStack {
             Button(L10n.t(.settings, state.language)) { state.openSettings() }
-                .font(.body)
+                .font(state.font(.body))
             Spacer()
             Button(L10n.t(.quit, state.language)) { NSApplication.shared.terminate(nil) }
-                .font(.body)
+                .font(state.font(.body))
         }
     }
 }
@@ -77,38 +77,45 @@ struct BoardView: View {
         let line = store?.railwayTitle(board.railwayId, language: state.language) ?? board.railwayId
         let station = store?.stationTitle(board.stationId, language: state.language) ?? board.stationId
         let dir = state.directionLabel(railwayId: board.railwayId, stationId: board.stationId, directionId: board.directionId)
-        let deps = state.boardDepartures[board.id] ?? []
+        let result = state.boardDepartures[board.id] ?? .none
+        let deps = result.departures
 
         return VStack(alignment: .leading, spacing: 4) {
             // Station name is the headline (previously the line name's slot).
-            Text(station).font(.title3.weight(.semibold))
-            // Line name carries the line color, sized like a departure row.
+            Text(station).font(state.font(.title3, weight: .semibold)).padding(.bottom, 2)
+            // Line name carries the line color, sized like a departure row;
+            // the live status sits compactly to its right (🟢 normal / ⚠️ disrupted).
             HStack(spacing: 6) {
                 Circle()
                     .fill(Color(hex: store?.railwaysById[board.railwayId]?.color) ?? .gray)
-                    .frame(width: 9, height: 9)
-                Text(line).font(.body)
-            }
-            // Direction sits where "station → dir" used to.
-            Text(dir).font(.subheadline).foregroundStyle(.secondary)
-
-            if let status = state.statusByRailway[board.railwayId] {
-                HStack(alignment: .top, spacing: 4) {
-                    if !status.isNormal {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .padding(.top, 2)
+                    .frame(width: 9 * state.boardTextSize.scale, height: 9 * state.boardTextSize.scale)
+                Text(line).font(state.font(.body)).foregroundStyle(.secondary)
+                if let status = state.statusByRailway[board.railwayId] {
+                    let label = status.isNormal
+                        ? L10n.t(.normalService, state.language)
+                        : (status.statusLabel?.localized(state.language) ?? status.display(state.language))
+                    // Push the status to the row's trailing edge.
+                    Spacer(minLength: 8)
+                    // Normal uses a green dot matching the line-color dot's size and
+                    // spacing; disruptions keep the ⚠️ emoji.
+                    if status.isNormal {
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 9 * state.boardTextSize.scale, height: 9 * state.boardTextSize.scale)
+                    } else {
+                        Text("⚠️").font(state.font(.body))
                     }
-                    Text(status.display(state.language))
-                        .font(.subheadline)
+                    Text(label)
+                        .font(state.font(.body))
                         .foregroundStyle(status.isNormal ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
                 }
             }
+            // Direction sits where "station → dir" used to.
+            Text(dir).font(state.font(.body)).foregroundStyle(.secondary)
 
             if deps.isEmpty {
-                Text(L10n.t(.noUpcoming, state.language)).font(.subheadline).foregroundStyle(.secondary).padding(.top, 1)
+                Text(L10n.t(result.serviceEnded ? .serviceEnded : .noUpcoming, state.language)).font(state.font(.subheadline)).foregroundStyle(.secondary).padding(.top, 1)
             } else {
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(deps) { dep in
@@ -145,26 +152,26 @@ struct DepartureRow: View {
         return HStack(spacing: 8) {
             // Time keeps its smaller, monospaced size; everything else is larger.
             Text(Self.timeFmt.string(from: dep.scheduled))
-                .font(.system(.subheadline, design: .monospaced))
-                .frame(width: 48, alignment: .leading)
+                .font(state.font(.subheadline, monospaced: true))
+                .frame(width: 48 * state.boardTextSize.scale, alignment: .leading)
             Text(mins == 0 ? L10n.t(.now, state.language) : L10n.inMinutes(mins, state.language))
-                .font(.body.weight(.medium))
+                .font(state.font(.body, weight: .medium))
                 .foregroundStyle(mins <= 2 ? Color.orange : .secondary)
-                .frame(width: 58, alignment: .leading)
+                .frame(width: 58 * state.boardTextSize.scale, alignment: .leading)
             HStack(spacing: 6) {
                 if !type.isEmpty {
-                    Text(type).font(.body.weight(.bold))   // 種別 (bold)
+                    Text(type).font(state.font(.body, weight: .bold))   // 種別 (bold)
                 }
                 if !name.isEmpty {
-                    Text(name).font(.body)
+                    Text(name).font(state.font(.body))
                 }
                 if !dest.isEmpty {
-                    Text(dest).font(.body)                 // 行き先 (to the right of 種別)
+                    Text(dest).font(state.font(.body))                  // 行き先 (to the right of 種別)
                 }
             }
             .lineLimit(1)
             if let delay = dep.delayMinutes, delay > 0 {
-                Text("+\(delay)m").font(.callout.weight(.bold)).foregroundStyle(.red)
+                Text("+\(delay)m").font(state.font(.callout, weight: .bold)).foregroundStyle(.red)
             }
             Spacer(minLength: 0)
         }

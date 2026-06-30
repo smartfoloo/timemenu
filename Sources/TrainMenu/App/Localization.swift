@@ -10,6 +10,7 @@ enum L10n {
         case settings
         case quit
         case noUpcoming
+        case serviceEnded
         case now
         case yourBoards
         case addOneBelow
@@ -21,6 +22,11 @@ enum L10n {
         case addBoardButton
         case preferences
         case language
+        case textSize
+        case textSizeSmall
+        case textSizeNormal
+        case textSizeLarge
+        case textSizeExtraLarge
         case launchAtLogin
         case chooseLine
         case done
@@ -35,6 +41,7 @@ enum L10n {
         case realtimeOff
         case realtimeOn
         case settingsWindowTitle
+        case normalService
     }
 
     static func t(_ key: Key, _ lang: String) -> String {
@@ -67,6 +74,16 @@ enum L10n {
             return "direction " + names.joined(separator: " / ")
         default:
             return "for " + names.joined(separator: " / ")
+        }
+    }
+
+    /// Localized name for a board text-size level (for the Settings picker).
+    static func textSizeName(_ size: BoardTextSize, _ lang: String) -> String {
+        switch size {
+        case .small:      return t(.textSizeSmall, lang)
+        case .normal:     return t(.textSizeNormal, lang)
+        case .large:      return t(.textSizeLarge, lang)
+        case .extraLarge: return t(.textSizeExtraLarge, lang)
         }
     }
 
@@ -121,6 +138,14 @@ enum L10n {
             "fr": "Aucun train à venir.",
             "zh-Hans": "暂无即将发车的列车。",
             "zh-Hant": "暫無即將發車的列車。",
+        ],
+        .serviceEnded: [
+            "en": "Service has ended for today.",
+            "ja": "本日の運転は終了しました",
+            "ko": "오늘 운행이 종료되었습니다",
+            "fr": "Le service est terminé pour aujourd'hui.",
+            "zh-Hans": "今日运营已结束。",
+            "zh-Hant": "今日營運已結束。",
         ],
         .now: [
             "en": "now",
@@ -209,6 +234,46 @@ enum L10n {
             "fr": "Langue",
             "zh-Hans": "语言",
             "zh-Hant": "語言",
+        ],
+        .textSize: [
+            "en": "Text size",
+            "ja": "文字サイズ",
+            "ko": "글자 크기",
+            "fr": "Taille du texte",
+            "zh-Hans": "文字大小",
+            "zh-Hant": "文字大小",
+        ],
+        .textSizeSmall: [
+            "en": "Small",
+            "ja": "小",
+            "ko": "작게",
+            "fr": "Petit",
+            "zh-Hans": "小",
+            "zh-Hant": "小",
+        ],
+        .textSizeNormal: [
+            "en": "Default",
+            "ja": "標準",
+            "ko": "기본",
+            "fr": "Par défaut",
+            "zh-Hans": "默认",
+            "zh-Hant": "預設",
+        ],
+        .textSizeLarge: [
+            "en": "Large",
+            "ja": "大",
+            "ko": "크게",
+            "fr": "Grand",
+            "zh-Hans": "大",
+            "zh-Hant": "大",
+        ],
+        .textSizeExtraLarge: [
+            "en": "Extra large",
+            "ja": "特大",
+            "ko": "아주 크게",
+            "fr": "Très grand",
+            "zh-Hans": "特大",
+            "zh-Hant": "特大",
         ],
         .launchAtLogin: [
             "en": "Launch at login",
@@ -321,6 +386,14 @@ enum L10n {
             "fr": "Réglages TrainMenu",
             "zh-Hans": "TrainMenu 设置",
             "zh-Hant": "TrainMenu 設定",
+        ],
+        .normalService: [
+            "en": "Normal service",
+            "ja": "平常運転",
+            "ko": "정상 운행",
+            "fr": "Service normal",
+            "zh-Hans": "正常运行",
+            "zh-Hant": "正常運行",
         ],
     ]
 }
