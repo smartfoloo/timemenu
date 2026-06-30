@@ -44,7 +44,7 @@ struct SettingsView: View {
             Button {
                 showAddSheet = true
             } label: {
-                Label(L10n.t(.addBoardButton, lang), systemImage: "plus.circle.fill")
+                Label(L10n.t(.addBoardButton, lang), systemImage: "plus")
             }
             .buttonStyle(.borderless)
         } header: {
